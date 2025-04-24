@@ -22,6 +22,5 @@ plugins {
 include(":app")
 include(":utils")
 
-rootProject.name = "task_conductor"
-include("tcapi")
-include("tcapi")
+rootProject.name = "TaskShark"
+include("taskshark")
