@@ -7,6 +7,7 @@ abstract class Task : ITask {
     @JvmField protected var state = State.NotStarted
     @JvmField protected var id = -1
     @JvmField protected var priority = 0
+    @JvmField protected var scheduler: Scheduler? = null
 
     final override fun getState() = state
 
@@ -20,6 +21,7 @@ abstract class Task : ITask {
 
     override fun register(parent: Scheduler) {
         id = parent.register(this)
+        scheduler = parent
     }
 
     final override fun getPriority(): Int = priority
@@ -33,8 +35,17 @@ abstract class Task : ITask {
 
     final override fun getDependents() = depends.toMutableSet().also { extendGetDependents(it) }
 
-    override fun stop(cancel: Boolean): Nothing {
-        throw TaskStopException(cancel)
+    override fun stop(cancel: Boolean) {
+        when (state) {
+            State.Starting, State.Ticking -> {
+                transition(State.Finishing)
+                onFinish(!cancel)
+            }
+            else -> {}
+        }
+        transition(if (cancel) State.Cancelled else State.Finished)
+        if (scheduler?.getCurrentEvaluation() === this)
+            throw TaskStopException(cancel)
     }
 
     override fun <T : ITask> then(other: T): T {

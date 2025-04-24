@@ -103,11 +103,11 @@ interface ITask {
      * **Implement/override this method** to handle cleaning up a Task after successful completion
      * or cancellation.
      *
-     * **If the task finished normally**, the task will be in the [Finishing][ITask.State.Finishing] state
-     * throughout this callback, and [completedNormally] will be `true`.
+     * The task will be in the [Finishing][ITask.State.Finishing] state throughout this callback.
      *
-     * **If the task was cancelled**, the task will be in whichever state it was in when it was cancelled,
-     * and [completedNormally] will be `false`.
+     * **If the task finished normally** (or [stop]ped with `cancel = false`, or [finish]ed), [completedNormally] will be `true`.
+     *
+     * **If the task was cancelled**, [completedNormally] will be `false`.
      *
      * **Cancellation** in this stage moves the task immediately to the [Cancelled][ITask.State.Cancelled] state, and execution in the [onFinish] block will end, even if the task would have otherwise finished normally.
      *
@@ -142,8 +142,9 @@ interface ITask {
      *
      * @param cancel if `true` or omitted, the task is cancelled; if `false`, the task completed normally
      *
-     * If the [getProcessing] [Signal] is active, then this function **throws [TaskStopException]**.
+     * If this task is currently being processed, then this function **throws [TaskStopException]**.
      */
+    @Throws(TaskStopException::class)
     fun stop(cancel: Boolean)
 
     /**
@@ -151,8 +152,9 @@ interface ITask {
      *
      * See [canStart], [onStart], [onTick], and [onFinish] documentation for behavior details.
      *
-     * If the [getProcessing] [Signal] is active, then this function **throws [TaskStopException]**.
+     * If this task is currently being processed, then this function **throws [TaskStopException]**.
      */
+    @Throws(TaskStopException::class)
     fun stop() = stop(true)
     
     /**
@@ -160,17 +162,10 @@ interface ITask {
      *
      * See [canStart], [onStart], [onTick], and [onFinish] documentation for behavior details.
      *
-     * If the [getProcessing] [Signal] is active, then this function **throws [TaskStopException]**.
+     * If this task is currently being processed, then this function **throws [TaskStopException]**.
      */
+    @Throws(TaskStopException::class)
     fun finish() = stop(false)
-
-    /**
-     * This [Signal] is active when event handler code is running.
-     *
-     * If this signal is [active][Signal.isActive], then:
-     * * throwing [TaskStopException] returns control to the scheduler and stops the task
-     */
-    fun getProcessing(): Signal
 
     fun <T: ITask> then(other: T): T
 
