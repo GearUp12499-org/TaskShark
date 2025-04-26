@@ -1,6 +1,10 @@
 package io.github.gearup12499.taskshark
 
 interface ITask {
+    companion object {
+        val COMPARE_PRIORITY: Comparator<ITask> = Comparator.comparing(ITask::getPriority).thenComparing(ITask::hashCode)
+    }
+
     enum class State(val order: Int) {
         NotStarted(0),
         Starting(1),
@@ -51,8 +55,10 @@ interface ITask {
     fun getId(): Int
 
     /**
-     * Priority determines which tasks should be processed first.
-     * High priority tasks are processed earlier than low priority tasks.
+     * Priority hints which tasks should be processed first.
+     * High priority tasks are processed earlier than low priority tasks, in general.
+     *
+     * Start/acquire order is **not guaranteed** with this method, due to optimizations in the scheduler.
      */
     fun getPriority(): Int
 
@@ -123,12 +129,26 @@ interface ITask {
      *
      * @return unordered [Set] of [Lock]s that must be free before the task can begin
      */
-    fun getRequirements(): Set<Lock>
+    fun dependedLocks(): Set<Lock> = emptySet()
+
+    /**
+     * Returns the set of [ITask]s that need to be completed for this task to begin.
+     *
+     * **If any of these tasks are [Cancelled][State.Cancelled]**, this task is also cancelled.
+     *
+     * The converse of this relationship can be found in [getDependents], though that method
+     * functions mainly as a hint to wake up tasks. Schedulers may make these hints mandatory for
+     * correct operation.
+     *
+     * @return unordered [Set] of [ITask]s that must be completed before the task can begin
+     */
+    fun dependedTasks(): Set<ITask> = emptySet()
 
     /**
      * Provides hints for quicker startup times on chains of tasks.
-     * Nothing will break if you just return an empty `Set`, but inter-task switches
-     * might take a bit longer.
+     *
+     * Optimizing [Scheduler]s may utilize this to only 'wake up' queued tasks when their
+     * depended on tasks are completed; returning too much is always better than not enough.
      *
      * @return a list of tasks that might be waiting for this task to finish. Their requirements will be
      * checked when this task finishes, and may start within the same tick.

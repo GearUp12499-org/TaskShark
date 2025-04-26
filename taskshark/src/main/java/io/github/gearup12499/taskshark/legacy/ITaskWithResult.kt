@@ -1,10 +1,12 @@
 package io.github.gearup12499.taskshark.legacy
 
+@Deprecated("the legacy api is deprecated")
 enum class ResolveReject {
     RESOLVE,
     REJECT
 }
 
+@Deprecated("the legacy api is deprecated")
 interface ITaskWithResult<T> : ITaskOld {
     fun getResultMaybe(): T?
     fun getResult(): T = getResultMaybe() ?: throw IllegalStateException("No result was available")
@@ -17,11 +19,13 @@ interface ITaskWithResult<T> : ITaskOld {
     }
 }
 
+@Deprecated("the legacy api is deprecated")
 interface ITaskConsumer<T> : ITaskOld {
     fun upstreamTyped(provider: ITaskWithResult<T>)
 }
 
 
+@Deprecated("the legacy api is deprecated")
 abstract class TaskWithResultTemplate<T>(scheduler: SchedulerOld) : TaskTemplate(scheduler), ITaskWithResult<T> {
     private var result: T? = null
 

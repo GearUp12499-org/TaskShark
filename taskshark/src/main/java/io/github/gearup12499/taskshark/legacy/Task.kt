@@ -44,6 +44,7 @@ typealias TaskAction2 = TaskQuery2<Unit>
 typealias TaskAction1 = TaskQuery1<Unit>
 typealias Runnable = () -> Unit
 
+@Deprecated("the legacy api is deprecated")
 class Task(
     override var scheduler: SchedulerOld,
 ): TaskWithChaining() {

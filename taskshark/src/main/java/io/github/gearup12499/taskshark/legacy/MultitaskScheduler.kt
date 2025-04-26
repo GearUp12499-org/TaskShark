@@ -6,6 +6,7 @@ import kotlin.math.ceil
 import kotlin.math.max
 import io.github.gearup12499.taskshark.legacy.ITaskOld.State
 
+@Deprecated("the legacy api is deprecated")
 internal fun getCaller(): String {
     try {
         throw Exception()
@@ -21,6 +22,7 @@ internal fun getCaller(): String {
     return "<unknown source>"
 }
 
+@Deprecated("the legacy api is deprecated")
 open class MultitaskScheduler
 @JvmOverloads constructor(private val throwDebuggingErrors: Boolean = true) : SchedulerOld() {
     private val locks: MutableMap<String, Int?> = mutableMapOf()

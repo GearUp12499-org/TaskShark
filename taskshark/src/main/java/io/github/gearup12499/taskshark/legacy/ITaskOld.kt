@@ -2,6 +2,7 @@ package io.github.gearup12499.taskshark.legacy
 
 import io.github.gearup12499.taskshark.legacy.ITaskOld.State
 
+@Deprecated("the legacy api is deprecated")
 interface ITaskOld {
     enum class State(val order: Int) {
         NotStarted(0),
@@ -68,6 +69,7 @@ interface ITaskOld {
     fun display(indent: Int, write: (String) -> Unit) {}
 }
 
+@Deprecated("the legacy api is deprecated")
 abstract class TaskWithChaining() : ITaskOld {
 
     private var waitFor: MutableSet<ITaskOld> = mutableSetOf()
@@ -85,6 +87,7 @@ abstract class TaskWithChaining() : ITaskOld {
     }
 }
 
+@Deprecated("the legacy api is deprecated")
 abstract class TaskTemplate(override var scheduler: SchedulerOld) : TaskWithChaining(), ITaskOld {
     final override var state = State.NotStarted
     final override var myId: Int? = null
@@ -140,6 +143,7 @@ abstract class TaskTemplate(override var scheduler: SchedulerOld) : TaskWithChai
     }
 }
 
+@Deprecated("the legacy api is deprecated")
 abstract class ConsumingTaskTemplate<T>(scheduler: SchedulerOld) : TaskTemplate(scheduler),
     ITaskConsumer<T> {
     private val typedUpstreams: MutableList<ITaskWithResult<T>> = mutableListOf()

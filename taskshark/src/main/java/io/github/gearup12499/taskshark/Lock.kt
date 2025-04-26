@@ -59,13 +59,13 @@ interface Lock {
      * Simple implementation of [Lock] based around string IDs.
      */
     @Suppress("MemberVisibilityCanBePrivate")
-    class Str(val name: String) : Lock {
+    class StrLock(val name: String) : Lock {
         private var deriveCount = 0
         override fun getFriendlyName() = name
 
-        override fun derive(annotation: String?): Str {
+        override fun derive(annotation: String?): StrLock {
             val n = deriveCount++
-            return Str(buildString {
+            return StrLock(buildString {
                 append(name)
                 append(".derive")
                 append(n)

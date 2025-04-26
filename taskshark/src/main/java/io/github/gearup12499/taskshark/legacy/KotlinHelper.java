@@ -8,6 +8,7 @@ import kotlin.jvm.functions.Function0;
 import kotlin.jvm.functions.Function1;
 import kotlin.jvm.functions.Function2;
 
+@Deprecated
 public class KotlinHelper {
     public static <A, B> Function2<A, B, Unit> kbu(BiConsumer<A, B> consumer) {
         return (a, b) -> {

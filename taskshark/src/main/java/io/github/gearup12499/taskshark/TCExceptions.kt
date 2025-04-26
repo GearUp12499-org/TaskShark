@@ -9,5 +9,20 @@ open class FastException : RuntimeException("FastException <control flow>") {
     }
 }
 
-internal class TaskStopException(val isCancellation: Boolean) : FastException()
+open class TaskSharkInternalException : RuntimeException {
+    companion object {
+        val ADDON = """
+            !  TaskShark internal error. If you aren't messing with TaskShark's internals, this is a bug.
+            !  Please report this error: https://github.com/GearUp12499-org/TaskShark/issues
+        """.trimMargin("!")
+
+        fun formatMessage(msg: String) = msg + "\n" + ADDON
+    }
+
+    constructor(message: String) : super(formatMessage(message))
+    constructor(message: String, cause: Throwable) : super(formatMessage(message), cause)
+    constructor(cause: Throwable) : super(ADDON, cause)
+}
+
+internal class TaskStopException() : FastException()
 

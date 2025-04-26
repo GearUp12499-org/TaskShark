@@ -1,5 +1,6 @@
 package io.github.gearup12499.taskshark.legacy
 
+@Deprecated("the legacy api is deprecated")
 abstract class SchedulerOld {
 
     /// Build and add a new Task.
