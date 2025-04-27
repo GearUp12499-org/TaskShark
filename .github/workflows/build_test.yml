@@ -29,9 +29,11 @@ jobs:
         if: ${{ steps.build.outcome == 'success' }}
         uses: actions/upload-artifact@v4
         with:
+          name: taskshark.jar
           path: "taskshark/build/libs/taskshark.jar"
       - name: Export documentation
         if: ${{ steps.doc.outcome == 'success' }}
         uses: actions/upload-artifact@v4
         with:
+          name: Dokka HTML
           path: "taskshark/build/dokka/html/"
