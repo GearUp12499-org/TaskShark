@@ -1,5 +1,12 @@
 package io.github.gearup12499.taskshark
 
+/**
+ * An object that handles the various actions related to running [Tasks][ITask].
+ *
+ * #### **Documentation in this class is intended for *implementers* (people creating custom Schedulers).**
+ *
+ * If you're just looking to use the library, check out the [FastScheduler] documentation.
+ */
 abstract class Scheduler {
     companion object {
         private var nextID = 0;
@@ -13,8 +20,36 @@ abstract class Scheduler {
         return (super.hashCode() shl 8) + id
     }
 
+    /**
+     * Whether the scheduler may throw an exception for *double acquires*.
+     *
+     * A *double acquire* is when the scheduler has already committed to starting a task,
+     * but one of the locks that the task requires has been taken by another task between the
+     * time the lock status was checked and the time the lock was to be acquired.
+     *
+     * A *double require* error will usually result in a subsequent *double free* error; see [errorOnLockDoubleFree] to
+     * control that behavior.
+     */
     @JvmField var errorOnLockDoubleAcquire = true
+
+    /**
+     * Whether the scheduler may throw an exception for *double frees*.
+     *
+     * A *double free* is when the scheduler realizes that a lock that a task claims to depend on
+     * was either acquired by another task somehow or never acquired by the task in question.
+     * While this does not represent a complete failure in the locking system the way a double acquire does,
+     * it still represents a logical failure somewhere in the system
+     *
+     * A common cause for this error is updating dependencies after the task has already started.
+     */
     @JvmField var errorOnLockDoubleFree = true
+
+    /**
+     * Whether the scheduler may throw an exception for *double finalizations*.
+     *
+     * This occurs when [runTaskFinalizers] is called multiple times on the same Task.
+     * If disabled, the operation will fail silently.
+     */
     @JvmField var errorOnTaskDoubleFinalize = true
     @JvmField var errorOnNeverFinalized = true
 
@@ -23,7 +58,12 @@ abstract class Scheduler {
     @JvmField protected val evalStack = ArrayDeque<ITask>()
 
     /**
-     * Add the provided [task] to this [Scheduler].
+     * Add the provided [task] to this [Scheduler] and assigns an ID. This is the second phase of registration,
+     * the first phase being [ITask.register].
+     *
+     * ## Users: do not call directly. Instead, use [add] to add a task.
+     *
+     * For implementers of [Scheduler]:
      *
      * **Do not** call [Task.register] in implementations; this will cause an infinite loop!
      *
@@ -37,12 +77,36 @@ abstract class Scheduler {
      */
     open fun refresh(task: ITask) {}
 
+    /**
+     * Adds an [ITask] to this scheduler.
+     *
+     * Internally, calls [ITask.register].
+     *
+     * @return the passed task, for chaining
+     */
     open fun <T: ITask> add(task: T): T {
         task.register(this)
         return task
     }
 
-    open fun getOpenEvaluations(): ArrayDeque<ITask> = evalStack
+    /**
+     * Returns the current owner of a [Lock], or null if there is no current owner (i.e. it is released.)
+     */
+    abstract fun getLockOwner(lock: Lock): ITask?
+
+    /**
+     * Retrieve the list of "open evaluations" - a "mini call stack" containing the stack of
+     * tasks that are actively running user code ([ITask.onStart], [ITask.onTick], [ITask.onFinish])
+     *
+     * [getCurrentEvaluation] returns the top (last) item of this "stack".
+     */
+    open fun getOpenEvaluations(): List<ITask> = evalStack.toList()
+
+    /**
+     * Retrieve the current "open evaluations" - the last task to start running user code ([ITask.onStart], [ITask.onTick], [ITask.onFinish]) in this context.
+     *
+     * [getOpenEvaluations] returns the entire stack of tasks that are actively running user code.
+     */
     open fun getCurrentEvaluation(): ITask? = evalStack.lastOrNull()
 
     /**
@@ -52,7 +116,8 @@ abstract class Scheduler {
      * This method is part of the public API because it is necessary for [ITask.stop] and other outside-of-scheduler
      * state operations.
      *
-     * **Only call this method once on each task!**
+     * ### __Only call this method once on each task!__
+     * Do not call directly except in custom [ITask] implementations; [Task] (the class) already handles this for you.
      */
     abstract fun runTaskFinalizers(task: ITask)
 
@@ -72,5 +137,6 @@ abstract class Scheduler {
         }
     }
 
+    abstract fun getTickCount(): Int
     abstract fun tick()
 }

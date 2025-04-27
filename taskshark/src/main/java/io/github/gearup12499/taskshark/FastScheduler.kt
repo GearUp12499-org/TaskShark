@@ -1,7 +1,6 @@
 package io.github.gearup12499.taskshark
 
 import java.util.TreeSet
-import kotlin.contracts.ExperimentalContracts
 
 open class FastScheduler() : Scheduler() {
     @JvmField
@@ -200,6 +199,11 @@ open class FastScheduler() : Scheduler() {
         refreshInternal(task)
     }
 
+    override fun getLockOwner(lock: Lock) = locks[lock]
+
+    /**
+     * @suppress
+     */
     override fun register(task: ITask): Int {
         val id = nextId++
         tasks.put(id, task)
@@ -229,8 +233,12 @@ open class FastScheduler() : Scheduler() {
         }
     }
 
+    private var tickCount = 0
     override fun tick() {
         processWaiting()
         processTicking()
+        tickCount++
     }
+
+    override fun getTickCount() = tickCount
 }

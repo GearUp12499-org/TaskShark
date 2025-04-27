@@ -36,11 +36,15 @@ interface ITask {
 
     /**
      * Registers this task to a Scheduler.
+     *
+     * ## Usually not used directly; instead use [Scheduler.add].
+     *
      * Any implementation MUST call [register][Scheduler.register] on the provided [parent] and update the value
      * returned by [getId] accordingly.
      *
      * Only valid when the task has not started and prior to any calls to [canStart].
      *
+     * @suppress
      * @param parent Scheduler that this task is now managed by.
      */
     fun register(parent: Scheduler)
@@ -187,7 +191,21 @@ interface ITask {
     @Throws(TaskStopException::class)
     fun finish() = stop(false)
 
+    /**
+     * Sets up the provided [other] task to run after this task completes, adding it to the dependency tree.
+     *
+     * @return other, for chaining
+     */
     fun <T: ITask> then(other: T): T
+
+    /**
+     * Add the provided [before] task as a dependency for this task.
+     */
+    fun require(before: ITask)
+    /**
+     * Add the provided [lock] lock as a dependency for this task.
+     */
+    fun require(lock: Lock)
 
     fun describeVerbose() = buildString {
         append("<")

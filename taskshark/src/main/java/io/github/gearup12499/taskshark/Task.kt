@@ -2,6 +2,8 @@ package io.github.gearup12499.taskshark
 
 import io.github.gearup12499.taskshark.ITask.IllegalTransitionException
 import io.github.gearup12499.taskshark.ITask.State
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.contract
 
 abstract class Task : ITask {
     @JvmField protected var state = State.NotStarted
@@ -43,7 +45,7 @@ abstract class Task : ITask {
     @JvmField protected val lockDependencies: MutableSet<Lock> = mutableSetOf()
     @JvmField protected val taskDependencies: MutableSet<ITask> = mutableSetOf()
 
-    fun require(lock: Lock) {
+    override fun require(lock: Lock) {
         lockDependencies.add(lock)
     }
 
@@ -73,6 +75,11 @@ abstract class Task : ITask {
     }
 
     override fun <T : ITask> then(other: T): T {
-        TODO("Not yet implemented")
+        dependents.add(other)
+        return other
+    }
+
+    override fun require(before: ITask) {
+        taskDependencies.add(before)
     }
 }
