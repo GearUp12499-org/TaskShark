@@ -85,4 +85,16 @@ object TestFastScheduler {
         assert(fs.getCurrentEvaluation() == null) { "a task is evaluating after the tick ended" }
         assert(fs.getLockOwner(lock) == null) { "lock was never released" }
     }
+
+    @Test fun `test then`() {
+        val fs = FastScheduler()
+        testing(fs) {
+            fs.add(RequireExecution())
+                .then(RequireExecution())
+                .then(RequireExecution())
+                .then(RequireExecution())
+                .then(RequireExecution())
+            runToCompletion(fs)
+        }
+    }
 }

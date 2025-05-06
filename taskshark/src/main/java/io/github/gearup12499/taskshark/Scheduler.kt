@@ -59,7 +59,7 @@ abstract class Scheduler {
 
     /**
      * Add the provided [task] to this [Scheduler] and assigns an ID. This is the second phase of registration,
-     * the first phase being [ITask.register].
+     * the first phase being [io.github.gearup12499.taskshark.register].
      *
      * ## Users: do not call directly. Instead, use [add] to add a task.
      *
@@ -72,15 +72,19 @@ abstract class Scheduler {
     abstract fun register(task: ITask): Int
 
     /**
-     * Hints to schedulers that preconditions and other configuration
-     * options on this [ITask] may have changed.
+     * Hints to schedulers that dependencies for this task have changed.
+     */
+    open fun resurvey(task: ITask) {}
+
+    /**
+     * Tries to start this Task if it is able to be started.
      */
     open fun refresh(task: ITask) {}
 
     /**
      * Adds an [ITask] to this scheduler.
      *
-     * Internally, calls [ITask.register].
+     * Internally, calls [io.github.gearup12499.taskshark.register].
      *
      * @return the passed task, for chaining
      */

@@ -2,13 +2,16 @@ package io.github.gearup12499.taskshark
 
 import java.util.TreeSet
 
+/**
+ * FastScheduler doesn't care about your "priority". Who needs that anyway?
+ */
 open class FastScheduler() : Scheduler() {
     @JvmField
     protected var nextId = 0
-    protected val activeWaiting: TreeSet<ITask> = TreeSet(ITask.COMPARE_PRIORITY)
-    protected val activeTicking: TreeSet<ITask> = TreeSet(ITask.COMPARE_PRIORITY)
+    protected val activeWaiting: MutableList<ITask> = mutableListOf()
+    protected val activeTicking: MutableList<ITask> = mutableListOf()
     protected val locks: MutableMap<Lock, ITask> = mutableMapOf()
-    protected val lockReleaseNotify: MutableMap<Lock, TreeSet<ITask>> = mutableMapOf()
+    protected val lockReleaseNotify: MutableMap<Lock, MutableList<ITask>> = mutableMapOf()
     private val disposed: MutableSet<ITask> = mutableSetOf()
 
     protected val taskDependencies: MutableMap<ITask, MutableSet<ITask>> = mutableMapOf()
@@ -188,7 +191,7 @@ open class FastScheduler() : Scheduler() {
             // we don't need to pay attention :P
             // we need **all** of these, so just pick the first one and queue it up
             val lock = locks.first()
-            lockReleaseNotify.putIfAbsent(lock, TreeSet(ITask.COMPARE_PRIORITY))
+            lockReleaseNotify.putIfAbsent(lock, mutableListOf())
             val notifyList = lockReleaseNotify[lock]!!
             notifyList.add(task)
             return RefreshResult.NotStarted
@@ -197,6 +200,11 @@ open class FastScheduler() : Scheduler() {
 
     override fun refresh(task: ITask) {
         refreshInternal(task)
+    }
+
+    override fun resurvey(task: ITask) {
+        if (tasks.containsValue(task)) surveyTaskPreconditions(task)
+        else if (!task.isVirtual()) throw IllegalArgumentException("The provided task ($task) is not registered in this scheduler ($this).")
     }
 
     override fun getLockOwner(lock: Lock) = locks[lock]

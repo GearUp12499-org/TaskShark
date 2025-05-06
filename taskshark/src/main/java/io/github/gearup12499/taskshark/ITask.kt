@@ -207,6 +207,16 @@ interface ITask {
      */
     fun require(lock: Lock)
 
+    /**
+     * If true, allows breaking the idea that this task needs to be added to a scheduler to be registered correctly.
+     *
+     * Used (for example) in [io.github.gearup12499.taskshark.prefabs.VirtualGroup], which isn't really a task but
+     * acts like one for programmer QOL reasons.
+     *
+     * @suppress
+     */
+    fun isVirtual(): Boolean = false
+
     fun describeVerbose() = buildString {
         append("<")
         append(this@ITask::class.simpleName ?: "[unknown class]")
