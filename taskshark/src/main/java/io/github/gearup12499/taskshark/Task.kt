@@ -83,4 +83,6 @@ abstract class Task : ITask {
     override fun require(before: ITask) {
         taskDependencies.add(before)
     }
+
+    override fun toString() = "${this::class.simpleName ?: this::class.qualifiedName ?: "<?:Task>"}#$id"
 }

@@ -1,5 +1,6 @@
 package io.github.gearup12499.taskshark
 
+import io.github.gearup12499.taskshark.api.LogOutlet
 import java.util.TreeSet
 
 /**
@@ -40,6 +41,9 @@ open class FastScheduler() : Scheduler() {
                 "Trying to acquire lock $it, but it's already owned by a different task: ${locks[it]}"
             }
             locks[it] = task
+            LogOutlet.currentLogger.debug {
+                "($this) acquired lock ${it.getFriendlyName()} for $task"
+            }
         }
     }
 
@@ -52,6 +56,9 @@ open class FastScheduler() : Scheduler() {
             }
             // release
             locks.remove(it)
+            LogOutlet.currentLogger.debug {
+                "($this) released lock ${it.getFriendlyName()} for $task"
+            }
         }
     }
 
@@ -106,6 +113,9 @@ open class FastScheduler() : Scheduler() {
     }
 
     override fun runTaskFinalizers(task: ITask) {
+        LogOutlet.currentLogger.debug {
+            "($this) Finalizing task: $task"
+        }
         if (disposed.contains(task)) {
             if (errorOnTaskDoubleFinalize) assert(false) {
                 "Attempt to finalize a task that's already been finalized: $task"
@@ -116,10 +126,16 @@ open class FastScheduler() : Scheduler() {
         releaseAllLocks(task)
         notifyDependents(task)
         notifyAllLocks(task)
+        LogOutlet.currentLogger.debug {
+            "($this) Finalize task completed: $task"
+        }
     }
 
     protected open fun lifecycleFinishTask(task: ITask) {
         try {
+            LogOutlet.currentLogger.debug {
+                "($this) lifecycleFinishTask: $task"
+            }
             activeTicking.remove(task)
             task.transition(ITask.State.Finishing)
             using(task, { task.onFinish(true) }, { return@lifecycleFinishTask })
@@ -139,10 +155,16 @@ open class FastScheduler() : Scheduler() {
         assert(task.getState() == ITask.State.NotStarted) {
             "Can't begin a task that has already begun"
         }
+        LogOutlet.currentLogger.debug {
+            "($this) lifecycleBeginTask: $task"
+        }
         task.transition(ITask.State.Starting)
         acquireAllLocks(task)
         using(task, { task.onStart() }, { return@lifecycleBeginTask })
         // do one tick now, potentially cascading into a finish / notify / begin...
+        LogOutlet.currentLogger.debug {
+            "($this) preempting first tick for $task..."
+        }
         task.transition(ITask.State.Ticking)
         activeTicking.add(task)
         lifecycleTickTask(task)
@@ -190,6 +212,9 @@ open class FastScheduler() : Scheduler() {
         } else {
             // we don't need to pay attention :P
             // we need **all** of these, so just pick the first one and queue it up
+            LogOutlet.currentLogger.debug {
+                "($this) $task is now sleeping (waiting for locks)"
+            }
             val lock = locks.first()
             lockReleaseNotify.putIfAbsent(lock, mutableListOf())
             val notifyList = lockReleaseNotify[lock]!!
@@ -249,4 +274,6 @@ open class FastScheduler() : Scheduler() {
     }
 
     override fun getTickCount() = tickCount
+
+    override fun toString(): String = "FastScheduler#$id"
 }

@@ -17,39 +17,42 @@ abstract class LogOutlet {
     }
 
     abstract var level: Level
-    protected abstract fun internalLog(message: String?, ex: Throwable?, level: Level)
+    abstract fun internalLog(message: String?, ex: Throwable?, level: Level)
 
-    fun escape(rawMessage: String) = rawMessage.replace("%", "%%")
-
-    fun log(level: Level, ex: Throwable?, @PrintFormat fmt: String?, vararg parameters: Any?) {
+    inline fun logDeferred(level: Level, ex: Throwable?, message: () -> String) {
         if (level.value < this.level.value) return
-        internalLog(fmt?.format(*parameters), ex, level)
+        internalLog(message(), ex, level)
+    }
+
+    fun log(level: Level, ex: Throwable?, message: String?) {
+        if (level.value < this.level.value) return
+        internalLog(message, ex, level)
     }
 
     open fun trace(message: String)
-        = log(Level.Trace, null, escape(message))
-    open fun trace(@PrintFormat fmt: String, first: Any?, vararg rest: Any?)
-        = log(Level.Trace, null, fmt, *rest)
+        = log(Level.Trace, null, message)
+    inline fun trace(provider: () -> String)
+        = logDeferred(Level.Trace, null, provider)
     open fun debug(message: String)
-        = log(Level.Debug, null, escape(message))
-    open fun debug(@PrintFormat fmt: String, first: Any?, vararg rest: Any?)
-        = log(Level.Debug, null, fmt, *rest)
+        = log(Level.Debug, null, message)
+    inline fun debug(provider: () -> String)
+        = logDeferred(Level.Debug, null, provider)
     open fun info(message: String)
-        = log(Level.Info, null, escape(message))
-    open fun info(@PrintFormat fmt: String, first: Any?, vararg rest: Any?)
-        = log(Level.Info, null, fmt, *rest)
+        = log(Level.Info, null, message)
+    inline fun info(provider: () -> String)
+        = logDeferred(Level.Info, null, provider)
     open fun warn(message: String)
-        = log(Level.Warn, null, escape(message))
-    open fun warn(@PrintFormat fmt: String, first: Any?, vararg rest: Any?)
-        = log(Level.Warn, null, fmt, *rest)
+        = log(Level.Warn, null, message)
+    inline fun warn(provider: () -> String)
+        = logDeferred(Level.Warn, null, provider)
     open fun error(message: String)
-        = log(Level.Error, null, escape(message))
-    open fun error(@PrintFormat fmt: String, first: Any?, vararg rest: Any?)
-        = log(Level.Error, null, fmt, *rest)
+        = log(Level.Error, null, message)
+    inline fun error(provider: () -> String)
+        = logDeferred(Level.Error, null, provider)
     open fun error(ex: Throwable, message: String)
-        = log(Level.Error, ex, escape(message))
-    open fun error(ex: Throwable, @PrintFormat fmt: String, first: Any?, vararg rest: Any?)
-        = log(Level.Error, ex, fmt, *rest)
+        = log(Level.Error, ex, message)
+    inline fun error(ex: Throwable, provider: () -> String)
+        = logDeferred(Level.Error, ex, provider)
     open fun error(ex: Throwable)
         = log(Level.Error, ex, null)
 
@@ -65,8 +68,9 @@ abstract class LogOutlet {
                 this.append("[${level.name}] ")
                 message?.let {
                     this.append(message)
-                    this.append("\n")
                 }
+                if (message != null && ex != null)
+                    this.append("\n")
                 ex?.let {
                     this.append(ex.stackTraceToString())
                 }
