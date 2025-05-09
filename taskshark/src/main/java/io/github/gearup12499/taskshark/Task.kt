@@ -2,6 +2,7 @@ package io.github.gearup12499.taskshark
 
 import io.github.gearup12499.taskshark.ITask.IllegalTransitionException
 import io.github.gearup12499.taskshark.ITask.State
+import io.github.gearup12499.taskshark.api.LogOutlet
 
 abstract class Task : ITask {
     @JvmField protected var state = State.NotStarted
@@ -22,6 +23,14 @@ abstract class Task : ITask {
     @Throws(IllegalTransitionException::class)
     override fun transition(newState: State) {
         if (newState.order < state.order) throw IllegalTransitionException(this, state, newState)
+        LogOutlet.currentLogger.debug {
+            buildString {
+                append("(${this@Task}) transition: $state -> $newState")
+                scheduler?.let {
+                    append(" (t = ${it.getTickCount()})")
+                }
+            }
+        }
         state = newState
     }
 

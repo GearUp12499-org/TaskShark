@@ -93,7 +93,10 @@ open class FastScheduler() : Scheduler() {
             when (state) {
                 ITask.State.Finished -> {
                     deps.remove(task)
-                    if (deps.isEmpty()) refreshInternal(task)
+                    LogOutlet.currentLogger.debug {
+                        "($this) ($task finalization) notify dependent: $it; ${deps.size} left"
+                    }
+                    if (deps.isEmpty()) refreshInternal(it)
                 }
 
                 ITask.State.Cancelled -> task.stop()
@@ -179,6 +182,9 @@ open class FastScheduler() : Scheduler() {
 
     protected fun refreshInternal(task: ITask): RefreshResult {
         if (task.getState() != ITask.State.NotStarted) return RefreshResult.AlreadyStarted
+        LogOutlet.currentLogger.debug {
+            "($this) Checking if $task is startable..."
+        }
         // remove it from the active waiting list, if possible (we're going to put them back if they're eligible)
         activeWaiting.remove(task)
         // do a quick survey of the task conditions...
@@ -268,8 +274,14 @@ open class FastScheduler() : Scheduler() {
 
     private var tickCount = 0
     override fun tick() {
+        LogOutlet.currentLogger.trace {
+            "($this) ---- TICK #$tickCount BEGIN ----"
+        }
         processWaiting()
         processTicking()
+        LogOutlet.currentLogger.trace {
+            "($this) ----  TICK #$tickCount END  ----"
+        }
         tickCount++
     }
 

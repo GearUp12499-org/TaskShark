@@ -5,7 +5,7 @@ import io.github.gearup12499.taskshark.Scheduler
 import io.github.gearup12499.taskshark.Task
 import io.github.gearup12499.taskshark.api.LogOutlet
 
-fun runToCompletion(sch: Scheduler) {
+@JvmOverloads fun runToCompletion(sch: Scheduler, timeOut: Int = 10_000) {
     while (sch.tasks.any { (_, task) ->
             if (task.getTags().contains("daemon")) true
             else when(task.getState()) {
@@ -14,7 +14,7 @@ fun runToCompletion(sch: Scheduler) {
             }
         }) {
         sch.tick()
-        if (sch.getTickCount() > 10_000) // arbitrary number
+        if (sch.getTickCount() > timeOut) // arbitrary number
             throw AssertionError("Execution timed out")
     }
 }
@@ -60,7 +60,7 @@ class TestTasks {
         })
     }
 
-    inner class RequireExecution() : Task(), Testable {
+    open inner class RequireExecution() : Task(), Testable {
         init { active.add(this) }
 
         override fun onStart() {
@@ -71,5 +71,16 @@ class TestTasks {
         override fun onTick() = true
 
         override var passed = false
+    }
+
+    open inner class RequireExecutionDeferred(): RequireExecution() {
+        private var isTicked = false
+        override fun onTick() = when (isTicked) {
+            true -> { true }
+            false -> {
+                isTicked = true
+                false
+            }
+        }
     }
 }

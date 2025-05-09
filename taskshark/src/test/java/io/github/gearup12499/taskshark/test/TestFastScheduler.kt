@@ -86,7 +86,19 @@ object TestFastScheduler {
         assert(fs.getLockOwner(lock) == null) { "lock was never released" }
     }
 
-    @Test fun `test then`() {
+    @Test fun `test then deferred`() {
+        val fs = FastScheduler()
+        testing(fs) {
+            fs.add(RequireExecutionDeferred())
+                .then(RequireExecutionDeferred())
+                .then(RequireExecutionDeferred())
+                .then(RequireExecutionDeferred())
+                .then(RequireExecutionDeferred())
+            runToCompletion(fs)
+        }
+    }
+
+    @Test fun `test then immediate`() {
         val fs = FastScheduler()
         testing(fs) {
             fs.add(RequireExecution())
