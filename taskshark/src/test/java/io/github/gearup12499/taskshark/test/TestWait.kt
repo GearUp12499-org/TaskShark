@@ -48,7 +48,7 @@ object TestWait {
         val duration = end!! - start!!
         val spinRate = fs.getTickCount() / duration.toDouble(DurationUnit.SECONDS)
         assert(spinRate >= MIN_SPIN_PER_SECOND) {
-            ("FastScheduler isn't performant enough (on this hardware)" +
+            ("FastScheduler isn't performant enough" +
                     " - expected at least ${MIN_SPIN_PER_SECOND}Hz, actually %.2fHz").format(spinRate)
         }
         LogOutlet.currentLogger.info {
