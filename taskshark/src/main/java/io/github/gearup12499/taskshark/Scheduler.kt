@@ -93,6 +93,10 @@ abstract class Scheduler {
         return task
     }
 
+    fun addAll(vararg tasks: ITask) {
+        for (t in tasks) add(t)
+    }
+
     /**
      * Returns the current owner of a [Lock], or null if there is no current owner (i.e. it is released.)
      */

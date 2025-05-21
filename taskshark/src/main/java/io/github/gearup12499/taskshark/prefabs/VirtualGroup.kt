@@ -5,6 +5,9 @@ import io.github.gearup12499.taskshark.Lock
 import io.github.gearup12499.taskshark.Scheduler
 
 class VirtualGroup(configure: Configure) : ITask {
+    private var scheduler: Scheduler? = null
+    val inside: MutableSet<ITask> = mutableSetOf()
+
     fun interface Configure {
         fun VirtualGroupDsl.conf()
     }
@@ -38,9 +41,6 @@ class VirtualGroup(configure: Configure) : ITask {
      * @suppress
      */
     override fun transition(newState: ITask.State) = reject()
-
-    private var scheduler: Scheduler? = null
-    val inside: MutableSet<ITask> = mutableSetOf()
 
     /**
      * @suppress

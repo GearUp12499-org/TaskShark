@@ -68,7 +68,7 @@ open class FastScheduler() : Scheduler() {
             if (locks[it] != null) return@forEach
 
             // Notify dependents...
-            val notifyListIter = lockReleaseNotify[it]?.let { notify -> TreeSet(notify) }
+            val notifyListIter = lockReleaseNotify[it]?.sortedWith(ITask.COMPARE_PRIORITY)
             if (notifyListIter == null) return@forEach
             processTasks@ for (task in notifyListIter) {
                 when (refreshInternal(task)) {

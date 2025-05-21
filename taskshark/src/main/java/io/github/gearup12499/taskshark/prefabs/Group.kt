@@ -5,7 +5,7 @@ import io.github.gearup12499.taskshark.ITask
 import io.github.gearup12499.taskshark.Scheduler
 import io.github.gearup12499.taskshark.Task
 
-class Group(conf: ConfigureFn) : Task() {
+open class Group(conf: ConfigureFn) : Task() {
     fun interface ConfigureFn {
         fun conf(inner: Scheduler)
     }

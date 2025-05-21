@@ -1,6 +1,7 @@
 package io.github.gearup12499.taskshark.test
 
 import io.github.gearup12499.taskshark.FastScheduler
+import io.github.gearup12499.taskshark.Scheduler
 import io.github.gearup12499.taskshark.api.LogOutlet
 import io.github.gearup12499.taskshark.prefabs.Wait
 import kotlin.test.Test
@@ -9,21 +10,22 @@ import kotlin.time.DurationUnit
 import kotlin.time.TimeSource
 import kotlin.time.TimeSource.Monotonic.markNow
 
-object TestWait {
-    const val DURATION = 10 // ms
-    val durationType = DURATION.milliseconds
+abstract class TestWait<T: Scheduler> : SchedulerImplTest<T>() {
+    class WithFastScheduler: TestWait<FastScheduler>(), FastSchedulerImplMixin
+
+    val duration = 10 // ms
+    val durationType = duration.milliseconds
 
     @Test
     fun `test wait at least ms`() {
-        val fs = FastScheduler()
         var end: TimeSource.Monotonic.ValueTimeMark? = null
         var start: TimeSource.Monotonic.ValueTimeMark? = null
-        testing(fs) {
-            fs.add(Wait.ms(DURATION))
+        testing(sch) {
+            sch.add(Wait.ms(duration))
                 .then(RequireExecution())
 
             start = markNow()
-            runToCompletion(fs)
+            runToCompletion(sch)
             end = markNow()
         }
         assert((end!! - start!! - durationType).isPositive()) {
@@ -31,28 +33,27 @@ object TestWait {
         }
     }
 
-    const val MIN_SPIN_PER_SECOND = 5000 // Hz; minimum
+    val minSpinPerSecond = 5000 // Hz; minimum
 
     @Test
     fun `test spin perf`() {
-        val fs = FastScheduler()
         var start: TimeSource.Monotonic.ValueTimeMark? = null
         var end: TimeSource.Monotonic.ValueTimeMark? = null
-        testing(fs) {
-            fs.add(Wait.ms(100))
+        testing(sch) {
+            sch.add(Wait.ms(100))
                 .then(RequireExecution())
             start = markNow()
-            runToCompletion(fs, 1_000_000_000) // run max 1B steps
+            runToCompletion(sch, 1_000_000_000) // run max 1B steps
             end = markNow()
         }
         val duration = end!! - start!!
-        val spinRate = fs.getTickCount() / duration.toDouble(DurationUnit.SECONDS)
-        assert(spinRate >= MIN_SPIN_PER_SECOND) {
+        val spinRate = sch.getTickCount() / duration.toDouble(DurationUnit.SECONDS)
+        assert(spinRate >= minSpinPerSecond) {
             ("FastScheduler isn't performant enough" +
-                    " - expected at least ${MIN_SPIN_PER_SECOND}Hz, actually %.2fHz").format(spinRate)
+                    " - expected at least ${minSpinPerSecond}Hz, actually %.2fHz").format(spinRate)
         }
         LogOutlet.currentLogger.info {
-            "Benchmark results: %.2fHz (minimum: ${MIN_SPIN_PER_SECOND}Hz)".format(spinRate)
+            "Benchmark results: %.2fHz (minimum: ${minSpinPerSecond}Hz)".format(spinRate)
         }
     }
 }

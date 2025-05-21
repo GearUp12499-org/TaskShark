@@ -6,7 +6,7 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
 
-class Wait(val duration: Duration) : Task() {
+open class Wait(val duration: Duration) : Task() {
     companion object {
         @JvmStatic fun s(seconds: Number) = Wait(seconds.toDouble().seconds)
         @JvmStatic fun ms(millis: Double) = Wait(millis.milliseconds)
