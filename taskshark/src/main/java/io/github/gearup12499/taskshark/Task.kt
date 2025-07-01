@@ -75,8 +75,8 @@ abstract class Task : ITask {
             if (scheduler?.getCurrentEvaluation() === this)
                 throw TaskStopException()
         } finally {
-            // this really needs to run, it's the only thing saving us from deadlocking
-            // even if [onFinish] blows up
+            // this really needs to run, it's the only thing saving us from
+            // deadlocking if [onFinish] blows up
             scheduler?.runTaskFinalizers(this)
         }
     }

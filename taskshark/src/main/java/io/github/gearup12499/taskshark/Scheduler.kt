@@ -77,7 +77,7 @@ abstract class Scheduler {
     open fun resurvey(task: ITask) {}
 
     /**
-     * Tries to start this Task if it is able to be started.
+     * Tries to start this Task if it is startable.
      */
     open fun refresh(task: ITask) {}
 
