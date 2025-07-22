@@ -1,7 +1,6 @@
 package io.github.gearup12499.taskshark
 
 import io.github.gearup12499.taskshark.api.LogOutlet
-import java.util.TreeSet
 
 /**
  * FastScheduler doesn't care about your "priority". Who needs that anyway?

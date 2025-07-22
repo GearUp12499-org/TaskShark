@@ -1,7 +1,5 @@
 package io.github.gearup12499.taskshark.api
 
-import org.intellij.lang.annotations.PrintFormat
-
 abstract class LogOutlet {
     companion object {
         @JvmStatic var currentLogger: LogOutlet = DefaultLogOutlet()

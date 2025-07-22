@@ -9,7 +9,7 @@ package io.github.gearup12499.taskshark
  */
 abstract class Scheduler {
     companion object {
-        private var nextID = 0;
+        private var nextID = 0
     }
 
     override fun equals(other: Any?): Boolean {
@@ -59,13 +59,13 @@ abstract class Scheduler {
 
     /**
      * Add the provided [task] to this [Scheduler] and assigns an ID. This is the second phase of registration,
-     * the first phase being [io.github.gearup12499.taskshark.register].
+     * the first phase being [ITask.register].
      *
      * ## Users: do not call directly. Instead, use [add] to add a task.
      *
      * For implementers of [Scheduler]:
      *
-     * **Do not** call [Task.register] in implementations; this will cause an infinite loop!
+     * **Do not** call [ITask.register] in implementations; this will cause an infinite loop!
      *
      * @return the task's ID number in context.
      */
@@ -84,7 +84,7 @@ abstract class Scheduler {
     /**
      * Adds an [ITask] to this scheduler.
      *
-     * Internally, calls [io.github.gearup12499.taskshark.register].
+     * Internally, calls [ITask.register].
      *
      * @return the passed task, for chaining
      */
@@ -132,7 +132,7 @@ abstract class Scheduler {
     protected inline fun <T> using(t: ITask, block: () -> T): T? = using(t, block) { null }
 
     protected inline fun <T> using(t: ITask, block: () -> T, onStopped: () -> T?): T? {
-        evalStack.addLast(t);
+        evalStack.addLast(t)
         return try {
             block()
         } catch (_: TaskStopException) {
