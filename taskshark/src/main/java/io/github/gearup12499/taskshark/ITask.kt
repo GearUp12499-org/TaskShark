@@ -1,4 +1,5 @@
 package io.github.gearup12499.taskshark
+import io.github.gearup12499.taskshark.prefabs.VirtualGroup
 
 interface ITask {
     companion object {
@@ -210,7 +211,7 @@ interface ITask {
     /**
      * If true, allows breaking the idea that this task needs to be added to a scheduler to be registered correctly.
      *
-     * Used (for example) in [io.github.gearup12499.taskshark.prefabs.VirtualGroup], which isn't really a task but
+     * Used (for example) in [VirtualGroup], which isn't really a task but
      * acts like one for programmer QOL reasons.
      *
      * @suppress

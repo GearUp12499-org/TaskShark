@@ -4,6 +4,7 @@ import io.github.gearup12499.taskshark.FastScheduler
 import io.github.gearup12499.taskshark.ITask
 import io.github.gearup12499.taskshark.Scheduler
 import io.github.gearup12499.taskshark.Task
+import io.github.gearup12499.taskshark.api.BuiltInTags
 
 open class Group(conf: ConfigureFn) : Task() {
     fun interface ConfigureFn {
@@ -15,7 +16,7 @@ open class Group(conf: ConfigureFn) : Task() {
             val state = it.getState()
             when (state) {
                 ITask.State.Finished, ITask.State.Cancelled -> true
-                else -> it.getTags().contains("daemon")
+                else -> it.getTags().contains(BuiltInTags.DAEMON)
             }
         }
     }

@@ -3,11 +3,12 @@ package io.github.gearup12499.taskshark.test
 import io.github.gearup12499.taskshark.ITask
 import io.github.gearup12499.taskshark.Scheduler
 import io.github.gearup12499.taskshark.Task
+import io.github.gearup12499.taskshark.api.BuiltInTags
 import io.github.gearup12499.taskshark.api.LogOutlet
 
 @JvmOverloads fun runToCompletion(sch: Scheduler, timeOut: Int = 10_000) {
     while (sch.tasks.any { (_, task) ->
-            if (task.getTags().contains("daemon")) true
+            if (task.getTags().contains(BuiltInTags.DAEMON)) true
             else when(task.getState()) {
                 ITask.State.Finished, ITask.State.Cancelled -> false
                 else -> true

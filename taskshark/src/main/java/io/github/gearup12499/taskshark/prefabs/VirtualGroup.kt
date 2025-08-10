@@ -3,6 +3,7 @@ package io.github.gearup12499.taskshark.prefabs
 import io.github.gearup12499.taskshark.ITask
 import io.github.gearup12499.taskshark.Lock
 import io.github.gearup12499.taskshark.Scheduler
+import io.github.gearup12499.taskshark.api.BuiltInTags
 
 class VirtualGroup(configure: Configure) : ITask {
     private var scheduler: Scheduler? = null
@@ -64,7 +65,7 @@ class VirtualGroup(configure: Configure) : ITask {
     /**
      * @suppress
      */
-    override fun getTags(): Set<String> = setOf("virtual", "daemon")
+    override fun getTags(): Set<String> = setOf(BuiltInTags.VIRTUAL, BuiltInTags.DAEMON)
 
     /**
      * @suppress
