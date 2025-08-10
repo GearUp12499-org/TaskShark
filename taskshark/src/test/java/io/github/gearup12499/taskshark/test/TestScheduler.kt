@@ -25,7 +25,7 @@ abstract class TestScheduler<T: Scheduler> : SchedulerImplTest<T>() {
         var onTickCalled = false
         var onFinishCalled = false
 
-        val task = object: Task() {
+        val task = object: Task.Anonymous() {
             override fun getTags(): Set<String> = emptySet()
 
             init {
@@ -55,7 +55,7 @@ abstract class TestScheduler<T: Scheduler> : SchedulerImplTest<T>() {
         assert(sch.getLockOwner(lock) == null) { "lock was never released" }
     }
 
-    class EarlyExitAndCleanup() : Task(), Testable {
+    class EarlyExitAndCleanup() : Task<EarlyExitAndCleanup>(), Testable {
         override val passed: Boolean
             get() = passed1 && passed2
         var passed1 = false

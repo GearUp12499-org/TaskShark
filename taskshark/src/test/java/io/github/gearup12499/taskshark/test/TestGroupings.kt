@@ -36,7 +36,7 @@ abstract class TestGroupings<T: Scheduler> : SchedulerImplTest<T>() {
     @Test
     fun `test multi-depend with VG`() {
         testing(sch) {
-            lateinit var first: ITask; lateinit var second: ITask
+            lateinit var first: ITask<*>; lateinit var second: ITask<*>
             sch.add(VirtualGroup {
                 first = add(WaitTicks(5))
                 second = add(WaitTicks(10))

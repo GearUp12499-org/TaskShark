@@ -16,13 +16,13 @@ interface Lock {
     /**
      * Called internally when this lock becomes 'acquired' (in use) by a Task.
      */
-    fun onAcquire(source: ITask) {}
+    fun onAcquire(source: ITask<*>) {}
 
     /**
      * Called internally when this lock is no longer 'acquired' by any Task and becomes
      * able to be claimed by any task.
      */
-    fun onRelease(source: ITask) {}
+    fun onRelease(source: ITask<*>) {}
 
     /**
      * Called internally when this lock is *explicitly* transferred to another Task.
@@ -35,7 +35,7 @@ interface Lock {
      * @param source Previous owner of the [Lock].
      * @param destination Next owner of the [Lock], when it begins.
      */
-    fun onTransfer(source: ITask, destination: ITask) {}
+    fun onTransfer(source: ITask<*>, destination: ITask<*>) {}
 
     /**
      * Create a new Lock derived from this Lock. The new lock should have a unique

@@ -24,5 +24,5 @@ open class TaskSharkInternalException : RuntimeException {
     constructor(cause: Throwable) : super(ADDON, cause)
 }
 
-internal class TaskStopException() : FastException()
+class TaskStopException() : FastException()
 

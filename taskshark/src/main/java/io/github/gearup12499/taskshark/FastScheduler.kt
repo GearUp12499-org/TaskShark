@@ -8,15 +8,15 @@ import io.github.gearup12499.taskshark.api.LogOutlet
 open class FastScheduler() : Scheduler() {
     @JvmField
     protected var nextId = 0
-    protected val activeWaiting: MutableList<ITask> = mutableListOf()
-    protected val activeTicking: MutableList<ITask> = mutableListOf()
-    protected val locks: MutableMap<Lock, ITask> = mutableMapOf()
-    protected val lockReleaseNotify: MutableMap<Lock, MutableList<ITask>> = mutableMapOf()
-    private val disposed: MutableSet<ITask> = mutableSetOf()
+    protected val activeWaiting: MutableList<ITask<*>> = mutableListOf()
+    protected val activeTicking: MutableList<ITask<*>> = mutableListOf()
+    protected val locks: MutableMap<Lock, ITask<*>> = mutableMapOf()
+    protected val lockReleaseNotify: MutableMap<Lock, MutableList<ITask<*>>> = mutableMapOf()
+    private val disposed: MutableSet<ITask<*>> = mutableSetOf()
 
-    protected val taskDependencies: MutableMap<ITask, MutableSet<ITask>> = mutableMapOf()
+    protected val taskDependencies: MutableMap<ITask<*>, MutableSet<ITask<*>>> = mutableMapOf()
 
-    protected open fun surveyTaskPreconditions(task: ITask): Boolean {
+    protected open fun surveyTaskPreconditions(task: ITask<*>): Boolean {
         val requires = task.dependedTasks().filter {
             val state = it.getState()
             when (state) {
@@ -34,7 +34,7 @@ open class FastScheduler() : Scheduler() {
         return requires.isEmpty()
     }
 
-    private fun acquireAllLocks(task: ITask) {
+    private fun acquireAllLocks(task: ITask<*>) {
         task.dependedLocks().forEach {
             if (errorOnLockDoubleAcquire) assert(locks[it] == null || locks[it] === task) {
                 "Trying to acquire lock $it, but it's already owned by a different task: ${locks[it]}"
@@ -46,7 +46,7 @@ open class FastScheduler() : Scheduler() {
         }
     }
 
-    private fun releaseAllLocks(task: ITask) {
+    private fun releaseAllLocks(task: ITask<*>) {
         task.dependedLocks().forEach {
             if (errorOnLockDoubleFree) assert(locks[it] === task) {
                 val currentOwner = locks[it]
@@ -61,7 +61,7 @@ open class FastScheduler() : Scheduler() {
         }
     }
 
-    private fun notifyAllLocks(task: ITask) {
+    private fun notifyAllLocks(task: ITask<*>) {
         task.dependedLocks().forEach {
             // Skip already owned locks because there's no way we need to notify again for those
             if (locks[it] != null) return@forEach
@@ -84,7 +84,7 @@ open class FastScheduler() : Scheduler() {
         }
     }
 
-    private fun notifyDependents(task: ITask) {
+    private fun notifyDependents(task: ITask<*>) {
         val state = task.getState()
         task.getDependents().forEach {
             val deps = taskDependencies[it]
@@ -107,14 +107,14 @@ open class FastScheduler() : Scheduler() {
         }
     }
 
-    fun getTaskMissingLocks(task: ITask): Set<Lock> {
+    fun getTaskMissingLocks(task: ITask<*>): Set<Lock> {
         return task.dependedLocks().filter {
             val currentState = locks[it]
             currentState != null && currentState != task
         }.toMutableSet()
     }
 
-    override fun runTaskFinalizers(task: ITask) {
+    override fun runTaskFinalizers(task: ITask<*>) {
         LogOutlet.currentLogger.debug {
             "($this) Finalizing task: $task"
         }
@@ -133,7 +133,7 @@ open class FastScheduler() : Scheduler() {
         }
     }
 
-    protected open fun lifecycleFinishTask(task: ITask) {
+    protected open fun lifecycleFinishTask(task: ITask<*>) {
         try {
             LogOutlet.currentLogger.debug {
                 "($this) lifecycleFinishTask: $task"
@@ -147,13 +147,13 @@ open class FastScheduler() : Scheduler() {
         }
     }
 
-    protected open fun lifecycleTickTask(task: ITask) {
+    protected open fun lifecycleTickTask(task: ITask<*>) {
         if (using(task, { task.onTick() }, { return@lifecycleTickTask }) ?: false) {
             lifecycleFinishTask(task)
         }
     }
 
-    protected open fun lifecycleBeginTask(task: ITask) {
+    protected open fun lifecycleBeginTask(task: ITask<*>) {
         assert(task.getState() == ITask.State.NotStarted) {
             "Can't begin a task that has already begun"
         }
@@ -179,7 +179,7 @@ open class FastScheduler() : Scheduler() {
         Died,
     }
 
-    protected fun refreshInternal(task: ITask): RefreshResult {
+    protected fun refreshInternal(task: ITask<*>): RefreshResult {
         if (task.getState() != ITask.State.NotStarted) return RefreshResult.AlreadyStarted
         LogOutlet.currentLogger.debug {
             "($this) Checking if $task is startable..."
@@ -228,11 +228,11 @@ open class FastScheduler() : Scheduler() {
         }
     }
 
-    override fun refresh(task: ITask) {
+    override fun refresh(task: ITask<*>) {
         refreshInternal(task)
     }
 
-    override fun resurvey(task: ITask) {
+    override fun resurvey(task: ITask<*>) {
         if (tasks.containsValue(task)) surveyTaskPreconditions(task)
         else if (!task.isVirtual()) throw IllegalArgumentException("The provided task ($task) is not registered in this scheduler ($this).")
     }
@@ -242,7 +242,7 @@ open class FastScheduler() : Scheduler() {
     /**
      * @suppress
      */
-    override fun register(task: ITask): Int {
+    override fun register(task: ITask<*>): Int {
         val id = nextId++
         tasks.put(id, task)
         // note: putting [refresh] in here violates some expectations about side effects during the construction phase

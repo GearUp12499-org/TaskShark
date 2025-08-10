@@ -1,9 +1,9 @@
 package io.github.gearup12499.taskshark
 import io.github.gearup12499.taskshark.prefabs.VirtualGroup
 
-interface ITask {
+interface ITask<Self: ITask<Self>> {
     companion object {
-        val COMPARE_PRIORITY: Comparator<ITask> = Comparator.comparing(ITask::getPriority).thenComparing(ITask::hashCode)
+        val COMPARE_PRIORITY: Comparator<ITask<*>> = Comparator.comparing(ITask<*>::getPriority).thenComparing(ITask<*>::hashCode)
     }
 
     enum class State(val order: Int) {
@@ -147,7 +147,7 @@ interface ITask {
      *
      * @return unordered [Set] of [ITask]s that must be completed before the task can begin
      */
-    fun dependedTasks(): Set<ITask> = emptySet()
+    fun dependedTasks(): Set<ITask<*>> = emptySet()
 
     /**
      * Provides hints for quicker startup times on chains of tasks.
@@ -158,7 +158,7 @@ interface ITask {
      * @return a list of tasks that might be waiting for this task to finish. Their requirements will be
      * checked when this task finishes, and may start within the same tick.
      */
-    fun getDependents(): Set<ITask>
+    fun getDependents(): Set<ITask<*>>
 
     /**
      * Stops this task, moving it to an appropriate final state and potentially calling [onFinish].
@@ -197,16 +197,16 @@ interface ITask {
      *
      * @return other, for chaining
      */
-    fun <T: ITask> then(other: T): T
+    fun <T: ITask<T>> then(other: T): T
 
     /**
      * Add the provided [before] task as a dependency for this task.
      */
-    fun require(before: ITask)
+    fun require(before: ITask<*>): Self
     /**
      * Add the provided [lock] lock as a dependency for this task.
      */
-    fun require(lock: Lock)
+    fun require(lock: Lock): Self
 
     /**
      * If true, allows breaking the idea that this task needs to be added to a scheduler to be registered correctly.
@@ -226,7 +226,7 @@ interface ITask {
         append(">")
     }
 
-    class IllegalTransitionException(subject: ITask, from: State, to: State) : RuntimeException(
+    class IllegalTransitionException(subject: ITask<*>, from: State, to: State) : RuntimeException(
         "Can't transition task ${subject.describeVerbose()} from $from (order ${from.order}) to $to (order ${to.order})"
     )
 }

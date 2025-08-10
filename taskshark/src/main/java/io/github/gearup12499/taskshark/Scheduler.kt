@@ -54,8 +54,8 @@ abstract class Scheduler {
     @JvmField var errorOnNeverFinalized = true
 
     @JvmField val id = nextID++
-    @JvmField val tasks = mutableMapOf<Int, ITask>()
-    @JvmField protected val evalStack = ArrayDeque<ITask>()
+    @JvmField val tasks = mutableMapOf<Int, ITask<*>>()
+    @JvmField protected val evalStack = ArrayDeque<ITask<*>>()
 
     /**
      * Add the provided [task] to this [Scheduler] and assigns an ID. This is the second phase of registration,
@@ -69,17 +69,17 @@ abstract class Scheduler {
      *
      * @return the task's ID number in context.
      */
-    abstract fun register(task: ITask): Int
+    abstract fun register(task: ITask<*>): Int
 
     /**
      * Hints to schedulers that dependencies for this task have changed.
      */
-    open fun resurvey(task: ITask) {}
+    open fun resurvey(task: ITask<*>) {}
 
     /**
      * Tries to start this Task if it is startable.
      */
-    open fun refresh(task: ITask) {}
+    open fun refresh(task: ITask<*>) {}
 
     /**
      * Adds an [ITask] to this scheduler.
@@ -88,19 +88,19 @@ abstract class Scheduler {
      *
      * @return the passed task, for chaining
      */
-    open fun <T: ITask> add(task: T): T {
+    open fun <T: ITask<*>> add(task: T): T {
         task.register(this)
         return task
     }
 
-    fun addAll(vararg tasks: ITask) {
+    fun addAll(vararg tasks: ITask<*>) {
         for (t in tasks) add(t)
     }
 
     /**
      * Returns the current owner of a [Lock], or null if there is no current owner (i.e. it is released.)
      */
-    abstract fun getLockOwner(lock: Lock): ITask?
+    abstract fun getLockOwner(lock: Lock): ITask<*>?
 
     /**
      * Retrieve the list of "open evaluations" - a "mini call stack" containing the stack of
@@ -108,14 +108,14 @@ abstract class Scheduler {
      *
      * [getCurrentEvaluation] returns the top (last) item of this "stack".
      */
-    open fun getOpenEvaluations(): List<ITask> = evalStack.toList()
+    open fun getOpenEvaluations(): List<ITask<*>> = evalStack.toList()
 
     /**
      * Retrieve the current "open evaluations" - the last task to start running user code ([ITask.onStart], [ITask.onTick], [ITask.onFinish]) in this context.
      *
      * [getOpenEvaluations] returns the entire stack of tasks that are actively running user code.
      */
-    open fun getCurrentEvaluation(): ITask? = evalStack.lastOrNull()
+    open fun getCurrentEvaluation(): ITask<*>? = evalStack.lastOrNull()
 
     /**
      * Clean up after the provided task has finished. The task should have already been moved to one of the finish
@@ -127,11 +127,11 @@ abstract class Scheduler {
      * ### __Only call this method once on each task!__
      * Do not call directly except in custom [ITask] implementations; [Task] (the class) already handles this for you.
      */
-    abstract fun runTaskFinalizers(task: ITask)
+    abstract fun runTaskFinalizers(task: ITask<*>)
 
-    protected inline fun <T> using(t: ITask, block: () -> T): T? = using(t, block) { null }
+    protected inline fun <T> using(t: ITask<*>, block: () -> T): T? = using(t, block) { null }
 
-    protected inline fun <T> using(t: ITask, block: () -> T, onStopped: () -> T?): T? {
+    protected inline fun <T> using(t: ITask<*>, block: () -> T, onStopped: () -> T?): T? {
         evalStack.addLast(t)
         return try {
             block()

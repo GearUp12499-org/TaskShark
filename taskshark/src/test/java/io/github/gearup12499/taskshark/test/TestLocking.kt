@@ -12,12 +12,12 @@ abstract class TestLocking<T: Scheduler> : SchedulerImplTest<T>() {
 
     val lock = Lock.StrLock("torch")
 
-    internal class MarkExecTime(val to: MutableMap<ITask, Int>): Task(), Testable {
+    internal class MarkExecTime(val to: MutableMap<ITask<*>, Int>): Task<MarkExecTime>(), Testable {
         private var startedAt: Int = -1
 
         override fun onStart() {
             startedAt = scheduler!!.getTickCount()
-            to.put(this, startedAt)
+            to[this] = startedAt
             passed = true
         }
 
@@ -31,7 +31,7 @@ abstract class TestLocking<T: Scheduler> : SchedulerImplTest<T>() {
     @Test
     fun `test acquire and release simul`() {
         val lock1 = lock.derive()
-        val storage = mutableMapOf<ITask, Int>()
+        val storage = mutableMapOf<ITask<*>, Int>()
         testing(sch) {
             val t1 = MarkExecTime(storage)
             active.add(t1)
@@ -52,7 +52,7 @@ abstract class TestLocking<T: Scheduler> : SchedulerImplTest<T>() {
     @Test
     fun `test lock anti-steal`() {
         val lock1 = lock.derive()
-        val storage = mutableMapOf<ITask, Int>()
+        val storage = mutableMapOf<ITask<*>, Int>()
         testing(sch) {
             val t1 = MarkExecTime(storage)
             val t2 = MarkExecTime(storage)

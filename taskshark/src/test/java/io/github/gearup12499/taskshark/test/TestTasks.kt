@@ -41,10 +41,10 @@ inline fun testing(sch: Scheduler, block: TestTasks.() -> Unit) {
 }
 
 class TestTasks {
-    val active: MutableSet<ITask> = mutableSetOf()
+    val active: MutableSet<ITask<*>> = mutableSetOf()
 
     fun assertPassed() {
-        val failures: MutableList<ITask> = mutableListOf()
+        val failures: MutableList<ITask<*>> = mutableListOf()
         for (task in active) {
             if (task !is Testable) continue
             if (!task.passed) {
@@ -61,7 +61,7 @@ class TestTasks {
         })
     }
 
-    open inner class RequireExecution() : Task(), Testable {
+    open inner class RequireExecution() : Task<RequireExecution>(), Testable {
         init { active.add(this) }
 
         override fun onStart() {
