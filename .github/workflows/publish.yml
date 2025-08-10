@@ -1,5 +1,7 @@
 on:
-- push
+  push:
+    branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -7,7 +9,7 @@ permissions:
   id-token: write
 
 jobs:
-  build_and_test:
+  publish:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
