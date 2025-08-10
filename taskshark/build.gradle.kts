@@ -1,10 +1,14 @@
 plugins {
-    id("buildsrc.convention.kotlin-jvm")
+    id("taskshark.buildsrc.kotlin-jvm")
     id("org.jetbrains.dokka") version "2.0.0"
 }
 
-group = "io.github.GearUp12499.taskshark"
-version = "unspecified"
+val groupId: String by project
+group = groupId
+val libraryVersion = run {
+    val version: String by project
+    version
+}
 
 repositories {
     mavenCentral()
@@ -12,6 +16,16 @@ repositories {
 
 dependencies {
     testImplementation(kotlin("test"))
+}
+
+publishing {
+    publications {
+        create<MavenPublication>("taskshark") {
+            artifactId = "taskshark"
+            version = libraryVersion
+            from(components["java"])
+        }
+    }
 }
 
 sourceSets.main {

@@ -7,7 +7,7 @@ import java.lang.Thread.currentThread
  * List of packages to exclude when considering what to name tasks by default.
  */
 val systemPackages = mutableSetOf(
-    PackageIdentifier::class.java.`package`.name  ,
+    PackageIdentifier::class.java.`package`.name,
     "java.",
     "javax.",
 )

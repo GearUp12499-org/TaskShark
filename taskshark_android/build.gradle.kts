@@ -1,6 +1,14 @@
 plugins {
     id("com.android.library")
     kotlin("android")
+    id("taskshark.buildsrc.publish")
+}
+
+val groupId: String by project
+group = groupId
+val libraryVersion = run {
+    val version: String by project
+    version
 }
 
 kotlin {
@@ -31,6 +39,18 @@ android {
     }
 }
 
+publishing {
+    publications {
+        register<MavenPublication>("androidRelease") {
+            artifactId = "taskshark-android"
+
+            afterEvaluate {
+                from(components["release"])
+            }
+        }
+    }
+}
+
 dependencies {
-    implementation(project(":taskshark"))
+    api(project(":taskshark"))
 }

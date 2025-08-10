@@ -1,0 +1,61 @@
+on:
+- push
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build_and_test:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: temurin
+          cache: gradle
+      - name: +x gradlew
+        shell: bash
+        run: chmod +x gradlew
+      - name: Generate documentation
+        if: ${{ always() }}
+        id: doc
+        shell: bash
+        run: ./gradlew dokkaGenerate
+      - name: Publish locally
+        id: publish
+        shell: bash
+        run: ./gradlew publishAllPublicationsToBuildLocalRepository
+      - name: Prepare to generate web export
+        shell: bash
+        id: prepare_export
+        run: mkdir -p dist
+      - name: Add Dokka to web export
+        id: export_dokka
+        shell: bash
+        if: ${{ steps.doc.outcome == 'success' && steps.prepare_export.outcome == 'success' }}
+        run: cp -r taskshark/build/dokka/html/* dist/
+      - name: Add Maven to web export
+        id: export_maven
+        shell: bash
+        if: ${{ steps.publish.outcome == 'success' && steps.prepare_export.outcome == 'success' }}
+        run: cp -r build/repo/* dist/
+      - name: Set up GitHub Pages
+        id: setup_pages
+        if: ${{ steps.prepare_export.outcome == 'success' && ( steps.export_dokka.outcome == 'success' || steps.export_maven.outcome == 'success' )}}
+        uses: actions/configure-pages@v5
+      - name: Upload GitHub Pages artifact
+        if: ${{ steps.setup_pages.outcome == 'success' }}
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+      - name: Publish GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

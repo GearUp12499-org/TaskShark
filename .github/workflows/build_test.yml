@@ -1,6 +1,7 @@
 on:
 - push
 - pull_request
+
 jobs:
   build_and_test:
     runs-on: ubuntu-latest
