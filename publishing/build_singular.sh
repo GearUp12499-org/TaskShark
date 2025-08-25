@@ -52,7 +52,7 @@ git switch --detach "$GIT_REF"
 if [ "$VERSION" = "_snapshot" ]; then
   ./gradlew publishAllPublicationsToBuildLocalRepository
 else
-  ./gradlew "-Dversion=$VERSION" publishAllPublicationsToBuildLocalRepository
+  ./gradlew "-Pversion=$VERSION" publishAllPublicationsToBuildLocalRepository
 fi
 
 popd || die "Failed to leave project directory"
