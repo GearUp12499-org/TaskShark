@@ -1,6 +1,10 @@
 on:
+  # Try to run when relevant (releases)
   push:
-    branches: [main]
+    tags:
+      - v*
+  release:
+    types: [published, edited]
   workflow_dispatch:
 
 permissions:
@@ -15,26 +19,34 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
+      # Always checkout main here regardless of event
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: '0'
+          ref: main
+          # get refs on-demand
+          filter: 'tree:0'
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           java-version: 17
           distribution: temurin
           cache: gradle
-      - name: +x gradlew
+      - name: chmod
         shell: bash
-        run: chmod +x gradlew
-      - name: Generate documentation
+        run: |
+          chmod +x gradlew publishing/strap.sh publishing/build_all.sh publishing/build_singular.sh
+      - name: Build repo
+        if: ${{ always() }}
+        id: repo
+        shell: bash
+        run: ./publishing/strap.sh
+      - name: Build docs
         if: ${{ always() }}
         id: doc
         shell: bash
-        run: ./gradlew dokkaGenerate
-      - name: Publish locally
-        id: publish
-        shell: bash
-        run: ./gradlew publishAllPublicationsToBuildLocalRepository
+        run: git switch main && ./gradlew dokkaGenerate
       - name: Prepare to generate web export
         shell: bash
         id: prepare_export
@@ -47,7 +59,7 @@ jobs:
       - name: Add Maven to web export
         id: export_maven
         shell: bash
-        if: ${{ steps.publish.outcome == 'success' && steps.prepare_export.outcome == 'success' }}
+        if: ${{ steps.repo.outcome == 'success' && steps.prepare_export.outcome == 'success' }}
         run: cp -r build/repo/* dist/
       - name: Set up GitHub Pages
         id: setup_pages
