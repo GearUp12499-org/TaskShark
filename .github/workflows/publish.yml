@@ -38,15 +38,9 @@ jobs:
         run: |
           chmod +x gradlew publishing/strap.sh publishing/build_all.sh publishing/build_singular.sh
       - name: Build repo
-        if: ${{ always() }}
         id: repo
         shell: bash
         run: ./publishing/strap.sh
-      - name: Build docs
-        if: ${{ always() }}
-        id: doc
-        shell: bash
-        run: git switch main && ./gradlew dokkaGenerate
       - name: Prepare to generate web export
         shell: bash
         id: prepare_export
@@ -54,8 +48,8 @@ jobs:
       - name: Add Dokka to web export
         id: export_dokka
         shell: bash
-        if: ${{ steps.doc.outcome == 'success' && steps.prepare_export.outcome == 'success' }}
-        run: cp -r taskshark/build/dokka/html/* dist/
+        if: ${{ steps.repo.outcome == 'success' && steps.prepare_export.outcome == 'success' }}
+        run: cp -r build/docs/* dist/
       - name: Add Maven to web export
         id: export_maven
         shell: bash

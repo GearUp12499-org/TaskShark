@@ -64,7 +64,7 @@ fi
 
 echo "$r$green    Building$bold documentation$r"
 if [ "$VERSION" = "_snapshot" ]; then
-  ln -s "$DOC_ARCHIVE_PATH" "$DOC_ACTIVE_ARCHIVE_PATH"
+  ln -s "$(realpath $DOC_ARCHIVE_PATH)" "$DOC_ACTIVE_ARCHIVE_PATH"
   ./gradlew :dok:dokkaGenerate
   mkdir -p "$DOC_PATH"
   cp -r "dok/build/dokka/html/"* "$DOC_PATH/"
