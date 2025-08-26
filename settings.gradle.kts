@@ -22,8 +22,8 @@ dependencyResolutionManagement {
 
 plugins {
     // Use the Foojay Toolchains plugin to automatically download JDKs required by subprojects.
-    id("org.gradle.toolchains.foojay-resolver-convention") version "0.8.0"
-    id("com.android.library") version "8.9.3" apply false
+    id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
+    id("com.android.library") version "8.11.1" apply false
 }
 
 // Include the `app` and `utils` subprojects in the build.
@@ -35,3 +35,5 @@ rootProject.name = "TaskShark"
 include("taskshark")
 // Android API bindings. Mainly logcat integration.
 include("taskshark_android")
+// Documentation container.
+include("dok")

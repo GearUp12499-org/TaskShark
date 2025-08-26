@@ -1,6 +1,6 @@
 plugins {
     id("taskshark.buildsrc.kotlin-jvm")
-    id("org.jetbrains.dokka") version "2.0.0"
+    alias(libs.plugins.dokka)
 }
 
 val groupId: String by project
@@ -16,6 +16,7 @@ repositories {
 
 dependencies {
     testImplementation(kotlin("test"))
+    dokkaHtmlPlugin(libs.dokkaVersioning)
 }
 
 publishing {

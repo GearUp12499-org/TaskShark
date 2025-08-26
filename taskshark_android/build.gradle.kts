@@ -2,6 +2,7 @@ plugins {
     id("com.android.library")
     kotlin("android")
     id("taskshark.buildsrc.publish")
+    alias(libs.plugins.dokka)
 }
 
 val groupId: String by project
@@ -36,6 +37,10 @@ android {
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
+    }
+
+    publishing {
+        singleVariant("release") {}
     }
 }
 
