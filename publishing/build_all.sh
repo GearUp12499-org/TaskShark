@@ -6,9 +6,9 @@ for i in $VERSION_TAGS; do
   ./build_singular.sh "v$i" "$i"
 done
 
-# Add other snapshot versions here
+# Add other snapshot versions here. Make sure 'dev' is last so the docs work.
 # shellcheck disable=SC2043
-for i in dev; do
+for i in 0.2 dev; do
   ./build_singular.sh "$i" "_snapshot"
 done
 
