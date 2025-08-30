@@ -3,6 +3,7 @@
 # Inputs
 GIT_REF=$1
 VERSION=$2
+IS_PRIMARY=$3
 
 # Expect exported: PROJECT_PATH
 
@@ -47,6 +48,9 @@ echo "$r$bold$green  Building $r$green $VERSION (from $GIT_REF)$r"
 if [ "$VERSION" = "_snapshot" ]; then
   echo "$r$yellow    This is a snapshot version.$r"
 fi
+if [ "$IS_PRIMARY" = "yes" ]; then
+  echo "$r$yellow    This is the primary version (finalized documentation)$r"
+fi
 
 pushd "$PROJECT_PATH" || die "Failed to change to project directory"
 
@@ -63,17 +67,27 @@ else
 fi
 
 echo "$r$green    Building$bold documentation$r"
-if [ "$VERSION" = "_snapshot" ]; then
+
+VER_OUT_PATH="$DOC_ARCHIVE_PATH/$VERSION"
+mkdir -p "$VER_OUT_PATH"
+
+if [ "$IS_PRIMARY" = "yes" ]; then
   ln -s "$(realpath $DOC_ARCHIVE_PATH)" "$DOC_ACTIVE_ARCHIVE_PATH"
-  ./gradlew :dok:dokkaGenerate
   mkdir -p "$DOC_PATH"
-  cp -r "dok/build/dokka/html/"* "$DOC_PATH/"
 else
   rm "$DOC_ACTIVE_ARCHIVE_PATH"
+fi
+
+if [ "$VERSION" = "_snapshot" ]; then
+  ./gradlew :dok:dokkaGenerate
+else
   ./gradlew "-Pversion=$VERSION" :dok:dokkaGenerate
-  VER_OUT_PATH="$DOC_ARCHIVE_PATH/$VERSION"
-  mkdir -p "$VER_OUT_PATH"
-  cp -r "dok/build/dokka/html/"* "$VER_OUT_PATH/"
+fi
+
+cp -r "dok/build/dokka/html/"* "$VER_OUT_PATH/"
+
+if [ "$IS_PRIMARY" = "yes" ]; then
+  cp -r "dok/build/dokka/html/"* "$DOC_PATH/"
 fi
 
 popd || die "Failed to leave project directory"
