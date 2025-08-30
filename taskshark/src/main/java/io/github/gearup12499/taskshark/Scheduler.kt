@@ -1,5 +1,7 @@
 package io.github.gearup12499.taskshark
 
+import io.github.gearup12499.taskshark.api.SupportsAdd
+
 /**
  * An object that handles the various actions related to running [Tasks][ITask].
  *
@@ -7,7 +9,7 @@ package io.github.gearup12499.taskshark
  *
  * If you're just looking to use the library, check out the [FastScheduler] documentation.
  */
-abstract class Scheduler {
+abstract class Scheduler : SupportsAdd {
     companion object {
         private var nextID = 0
     }
@@ -88,7 +90,7 @@ abstract class Scheduler {
      *
      * @return the passed task, for chaining
      */
-    open fun <T: ITask<*>> add(task: T): T {
+    override fun <T : ITask<*>> add(task: T): T {
         task.register(this)
         return task
     }

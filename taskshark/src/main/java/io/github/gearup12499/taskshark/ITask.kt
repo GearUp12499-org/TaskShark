@@ -197,7 +197,7 @@ interface ITask<Self: ITask<Self>> {
      *
      * @return other, for chaining
      */
-    fun <T: ITask<T>> then(other: T): T
+    fun <T: ITask<*>> then(other: T): T
 
     /**
      * Add the provided [before] task as a dependency for this task.

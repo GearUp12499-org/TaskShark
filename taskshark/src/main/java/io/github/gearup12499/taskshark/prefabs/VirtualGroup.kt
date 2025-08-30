@@ -18,7 +18,7 @@ class VirtualGroup(configure: Configure) : ITask<VirtualGroup> {
 
     @VirtualGroupDslMarker
     inner class VirtualGroupDsl {
-        fun <T: ITask<T>> add(task: T): T {
+        fun <T: ITask<*>> add(task: T): T {
             inside.add(task)
             scheduler?.add(task)
             return task
@@ -97,7 +97,7 @@ class VirtualGroup(configure: Configure) : ITask<VirtualGroup> {
      */
     override fun stop(cancel: Boolean) = reject()
 
-    override fun <T : ITask<T>> then(other: T): T {
+    override fun <T : ITask<*>> then(other: T): T {
         scheduler?.add(other)
         for (item in inside) item.then(other)
         return other

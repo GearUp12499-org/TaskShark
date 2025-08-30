@@ -4,16 +4,23 @@ import io.github.gearup12499.taskshark.ITask.IllegalTransitionException
 import io.github.gearup12499.taskshark.ITask.State
 import io.github.gearup12499.taskshark.api.LogOutlet
 
-abstract class Task<Self: Task<Self>> : ITask<Self> {
+abstract class Task<Self : Task<Self>> : ITask<Self> {
     /**
      * Helper type for anonymous extenders of Task that can't name themselves.
      */
     abstract class Anonymous : Task<Anonymous>()
 
-    @JvmField protected var state = State.NotStarted
-    @JvmField protected var id = -1
-    @JvmField protected var priority = 0
-    @JvmField protected var scheduler: Scheduler? = null
+    @JvmField
+    protected var state = State.NotStarted
+
+    @JvmField
+    protected var id = -1
+
+    @JvmField
+    protected var priority = 0
+
+    @JvmField
+    protected var scheduler: Scheduler? = null
 
     final override fun getState() = state
 
@@ -54,8 +61,11 @@ abstract class Task<Self: Task<Self>> : ITask<Self> {
 
     open fun extendGetDependents(result: MutableSet<ITask<*>>) {}
 
-    @JvmField protected val lockDependencies: MutableSet<Lock> = mutableSetOf()
-    @JvmField protected val taskDependencies: MutableSet<ITask<*>> = mutableSetOf()
+    @JvmField
+    protected val lockDependencies: MutableSet<Lock> = mutableSetOf()
+
+    @JvmField
+    protected val taskDependencies: MutableSet<ITask<*>> = mutableSetOf()
 
     override fun require(lock: Lock): Self {
         lockDependencies.add(lock)
@@ -66,7 +76,8 @@ abstract class Task<Self: Task<Self>> : ITask<Self> {
     final override fun dependedLocks(): Set<Lock> = lockDependencies
     final override fun dependedTasks(): Set<ITask<*>> = taskDependencies
 
-    @JvmField protected val dependents: MutableSet<ITask<*>> = mutableSetOf()
+    @JvmField
+    protected val dependents: MutableSet<ITask<*>> = mutableSetOf()
     final override fun getDependents() = dependents.toMutableSet().also { extendGetDependents(it) }
 
     override fun stop(cancel: Boolean) {
@@ -76,6 +87,7 @@ abstract class Task<Self: Task<Self>> : ITask<Self> {
                     transition(State.Finishing)
                     onFinish(!cancel)
                 }
+
                 else -> {}
             }
             transition(if (cancel) State.Cancelled else State.Finished)
@@ -88,7 +100,7 @@ abstract class Task<Self: Task<Self>> : ITask<Self> {
         }
     }
 
-    override fun <T : ITask<T>> then(other: T): T {
+    override fun <T : ITask<*>> then(other: T): T {
         if (!other.isVirtual()) dependents.add(other)
         other.require(this)
         scheduler?.add(other)
