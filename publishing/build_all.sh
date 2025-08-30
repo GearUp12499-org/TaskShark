@@ -8,7 +8,7 @@ done
 
 # Add other snapshot versions here
 # shellcheck disable=SC2043
-for i in main; do
+for i in dev; do
   ./build_singular.sh "$i" "_snapshot"
 done
 
