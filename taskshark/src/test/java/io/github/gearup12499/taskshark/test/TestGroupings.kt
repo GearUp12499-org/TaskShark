@@ -34,6 +34,19 @@ abstract class TestGroupings<T: Scheduler> : SchedulerImplTest<T>() {
     }
 
     @Test
+    fun `test VirtualGroup with chaining inside`() {
+        val tt = TestTasks()
+        sch.add(VirtualGroup {
+            add(tt.RequireExecution())
+                .then(tt.RequireExecution())
+            add(tt.RequireExecution())
+                .then(tt.RequireExecution())
+        })
+        runToCompletion(sch)
+        tt.assertPassed()
+    }
+
+    @Test
     fun `test multi-depend with VG`() {
         testing(sch) {
             lateinit var first: ITask<*>; lateinit var second: ITask<*>

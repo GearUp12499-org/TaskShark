@@ -45,6 +45,8 @@ interface ITask<Self: ITask<Self>> {
      *
      * Only valid when the task has not started and prior to any calls to [canStart].
      *
+     * Could potentially be called multiple times to change the parent scheduler and ID.
+     *
      * @suppress
      * @param parent Scheduler that this task is now managed by.
      */

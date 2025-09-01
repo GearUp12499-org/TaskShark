@@ -60,11 +60,11 @@ abstract class TestLocking<T: Scheduler> : SchedulerImplTest<T>() {
             active.add(t1)
             active.add(t2)
             active.add(t3)
+            sch.addAll(t1, t2, t3)
             t1.require(lock1)
             t2.require(lock1)
             t3.require(lock1)
             t1.then(t3)
-            sch.addAll(t1, t2, t3)
 
             runToCompletion(sch)
             assert(storage[t3]!! < storage[t2]!!) { "Lock was 'stolen' by t2" }

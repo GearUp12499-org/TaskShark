@@ -4,9 +4,10 @@ import io.github.gearup12499.taskshark.ITask
 import io.github.gearup12499.taskshark.Lock
 import io.github.gearup12499.taskshark.Scheduler
 import io.github.gearup12499.taskshark.api.BuiltInTags
+import io.github.gearup12499.taskshark.virtual.TaskBin
 
 class VirtualGroup(configure: Configure) : ITask<VirtualGroup> {
-    private var scheduler: Scheduler? = null
+    private var scheduler: Scheduler = TaskBin()
     val inside: MutableSet<ITask<*>> = mutableSetOf()
 
     fun interface Configure {
@@ -20,7 +21,7 @@ class VirtualGroup(configure: Configure) : ITask<VirtualGroup> {
     inner class VirtualGroupDsl {
         fun <T: ITask<*>> add(task: T): T {
             inside.add(task)
-            scheduler?.add(task)
+            scheduler.add(task)
             return task
         }
     }
@@ -47,8 +48,10 @@ class VirtualGroup(configure: Configure) : ITask<VirtualGroup> {
      * @suppress
      */
     override fun register(parent: Scheduler) {
+        val prev = scheduler
+        if (prev is TaskBin) prev.retcon(parent)
+        else for (task in inside) parent.add(task) // this is probably as good as we're going to get
         scheduler = parent
-        for (task in inside) parent.add(task)
         /* do not register this task with the scheduler explicitly */
     }
 
@@ -98,7 +101,8 @@ class VirtualGroup(configure: Configure) : ITask<VirtualGroup> {
     override fun stop(cancel: Boolean) = reject()
 
     override fun <T : ITask<*>> then(other: T): T {
-        scheduler?.add(other)
+        if (scheduler is TaskBin) throw IllegalStateException("No suitable scheduler assigned when calling 'then'")
+        scheduler.add(other)
         for (item in inside) item.then(other)
         return other
     }
@@ -114,4 +118,7 @@ class VirtualGroup(configure: Configure) : ITask<VirtualGroup> {
     }
 
     override fun isVirtual() = true
+
+    companion object {
+    }
 }

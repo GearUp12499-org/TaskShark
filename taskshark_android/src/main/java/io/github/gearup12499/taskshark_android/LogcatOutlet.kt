@@ -4,7 +4,7 @@ import android.util.Log
 import io.github.gearup12499.taskshark.api.LogOutlet
 
 class LogcatOutlet : LogOutlet() {
-    override var level = Level.Trace /* filtering can be handled by the logcat consumer */
+    override var level = Level.Debug /* filtering can be handled by the logcat consumer */
 
     private val dispatch: Map<Level, (tag: String?, msg: String?, thr: Throwable?) -> Any?> = mapOf(
         Level.Trace to Log::v,
