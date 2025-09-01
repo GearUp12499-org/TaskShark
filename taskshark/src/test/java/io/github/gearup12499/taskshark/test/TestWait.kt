@@ -25,7 +25,7 @@ abstract class TestWait<T: Scheduler> : SchedulerImplTest<T>() {
                 .then(RequireExecution())
 
             start = markNow()
-            runToCompletion(sch)
+            runToCompletion(sch, 1_000_000_000)
             end = markNow()
         }
         assert((end!! - start!! - durationType).isPositive()) {
