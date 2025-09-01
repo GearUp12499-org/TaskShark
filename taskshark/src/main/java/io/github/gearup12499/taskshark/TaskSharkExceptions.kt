@@ -14,6 +14,7 @@ open class TaskSharkInternalException : RuntimeException {
         val ADDON = """
             !  TaskShark internal error. If you aren't messing with TaskShark's internals, this is a bug.
             !  Please report this error: https://github.com/GearUp12499-org/TaskShark/issues
+            !  
         """.trimMargin("!")
 
         fun formatMessage(msg: String) = msg + "\n" + ADDON

@@ -91,8 +91,12 @@ abstract class Task<Self: Task<Self>> : ITask<Self> {
     override fun <T : ITask<T>> then(other: T): T {
         if (!other.isVirtual()) dependents.add(other)
         other.require(this)
-        scheduler?.add(other)
-        scheduler?.resurvey(other)
+        val scheduler = scheduler
+            ?: throw IllegalStateException(
+                "$this doesn't have a Scheduler assigned, so trying to use 'then' with $other could result in dangling tasks (which would crash when executed)\n" +
+                        "  If you're adding these tasks to a scheduler manually, add them to a scheduler first (or use the return value from .add())")
+        scheduler.add(other)
+        scheduler.resurvey(other)
         return other
     }
 

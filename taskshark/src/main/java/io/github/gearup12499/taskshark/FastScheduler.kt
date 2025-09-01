@@ -1,6 +1,7 @@
 package io.github.gearup12499.taskshark
 
 import io.github.gearup12499.taskshark.api.LogOutlet
+import java.util.IdentityHashMap
 
 /**
  * FastScheduler doesn't care about your "priority". Who needs that anyway?
@@ -14,7 +15,7 @@ open class FastScheduler() : Scheduler() {
     protected val lockReleaseNotify: MutableMap<Lock, MutableList<ITask<*>>> = mutableMapOf()
     private val disposed: MutableSet<ITask<*>> = mutableSetOf()
 
-    protected val taskDependencies: MutableMap<ITask<*>, MutableSet<ITask<*>>> = mutableMapOf()
+    protected val taskDependencies: MutableMap<ITask<*>, MutableSet<ITask<*>>> = IdentityHashMap()
 
     protected open fun surveyTaskPreconditions(task: ITask<*>): Boolean {
         val requires = task.dependedTasks().filter {
@@ -244,7 +245,7 @@ open class FastScheduler() : Scheduler() {
      */
     override fun register(task: ITask<*>): Int {
         val id = nextId++
-        tasks.put(id, task)
+        tasks[id] = task
         // note: putting [refresh] in here violates some expectations about side effects during the construction phase
         // instead, slap it on the queue (even if for only one tick) and make the dependency tree
         surveyTaskPreconditions(task)

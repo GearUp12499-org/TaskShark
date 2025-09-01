@@ -39,7 +39,8 @@ abstract class TestGroupings<T: Scheduler> : SchedulerImplTest<T>() {
         sch.add(VirtualGroup {
             add(tt.RequireExecution())
                 .then(tt.RequireExecution())
-            add(tt.RequireExecution().then(tt.RequireExecution()))
+            add(tt.RequireExecution())
+                .then(tt.RequireExecution())
         })
         runToCompletion(sch)
         tt.assertPassed()

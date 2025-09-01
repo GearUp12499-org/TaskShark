@@ -55,7 +55,7 @@ abstract class LogOutlet {
         = log(Level.Error, ex, null)
 
     class DefaultLogOutlet : LogOutlet() {
-        override var level = Level.Nothing
+        override var level = Level.Warn
 
         override fun internalLog(
             message: String?,
