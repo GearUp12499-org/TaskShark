@@ -99,7 +99,7 @@ open class FastScheduler() : Scheduler() {
                     if (deps.isEmpty()) refreshInternal(it)
                 }
 
-                ITask.State.Cancelled -> task.stop()
+                ITask.State.Cancelled -> it.stop()
                 else -> throw IllegalStateException(
                     "Task $task isn't in finished or cancelled state during finalization process, " +
                             "needed to determine what to do with dependent tasks"
