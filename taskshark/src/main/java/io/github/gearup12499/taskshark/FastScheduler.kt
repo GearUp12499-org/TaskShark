@@ -68,8 +68,7 @@ open class FastScheduler() : Scheduler() {
             if (locks[it] != null) return@forEach
 
             // Notify dependents...
-            val notifyListIter = lockReleaseNotify[it]?.sortedWith(ITask.COMPARE_PRIORITY)
-            if (notifyListIter == null) return@forEach
+            val notifyListIter = lockReleaseNotify[it]?.sortedWith(ITask.COMPARE_PRIORITY) ?: return@forEach
             processTasks@ for (task in notifyListIter) {
                 when (refreshInternal(task)) {
                     RefreshResult.Died, RefreshResult.Started -> {
@@ -126,6 +125,8 @@ open class FastScheduler() : Scheduler() {
             return
         }
         disposed.add(task)
+        activeTicking.remove(task)
+        activeWaiting.remove(task)
         releaseAllLocks(task)
         notifyDependents(task)
         notifyAllLocks(task)
@@ -139,7 +140,6 @@ open class FastScheduler() : Scheduler() {
             LogOutlet.currentLogger.debug {
                 "($this) lifecycleFinishTask: $task"
             }
-            activeTicking.remove(task)
             task.transition(ITask.State.Finishing)
             using(task, { task.onFinish(true) }, { return@lifecycleFinishTask })
             task.transition(ITask.State.Finished)
