@@ -19,7 +19,7 @@ class VirtualGroup(configure: Configure) : ITask<VirtualGroup> {
 
     @VirtualGroupDslMarker
     inner class VirtualGroupDsl {
-        fun <T: ITask<T>> add(task: T): T {
+        fun <T: ITask<*>> add(task: T): T {
             inside.add(task)
             scheduler.add(task)
             return task
