@@ -81,6 +81,10 @@ abstract class Task<Self : Task<Self>> : ITask<Self> {
     final override fun getDependents() = dependents.toMutableSet().also { extendGetDependents(it) }
 
     override fun stop(cancel: Boolean) {
+        val wasRunning = when (state) {
+            State.Starting, State.Ticking, State.Finishing -> true
+            else -> false
+        }
         try {
             when (state) {
                 State.Starting, State.Ticking -> {
@@ -96,7 +100,7 @@ abstract class Task<Self : Task<Self>> : ITask<Self> {
         } finally {
             // this really needs to run, it's the only thing saving us from
             // deadlocking if [onFinish] blows up
-            scheduler?.runTaskFinalizers(this)
+            scheduler?.runTaskFinalizers(this, wasRunning)
         }
     }
 

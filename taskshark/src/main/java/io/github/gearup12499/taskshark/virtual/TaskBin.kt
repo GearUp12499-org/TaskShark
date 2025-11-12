@@ -34,7 +34,7 @@ internal class TaskBin : Scheduler() {
 
     override fun getLockOwner(lock: Lock): Nothing = stub("getLockOwner")
 
-    override fun runTaskFinalizers(task: ITask<*>): Nothing = stub("runTaskFinalizers")
+    override fun runTaskFinalizers(task: ITask<*>, wasRunning: Boolean): Nothing = stub("runTaskFinalizers")
 
     override fun getTickCount(): Int {
         LogOutlet.currentLogger.error("tried to use 'getTickCount' on fake Scheduler (TaskBin); a different scheduler should have been assigned before we got here")
