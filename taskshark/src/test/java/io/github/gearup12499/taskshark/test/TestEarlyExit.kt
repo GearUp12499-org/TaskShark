@@ -11,57 +11,65 @@ abstract class TestEarlyExit<T: Scheduler> : SchedulerImplTest<T>() {
 
     @Test
     fun `test early finish in onStart`() {
-        sch.add(object: Task.Anonymous() {
-            override fun onStart() {
-                finish()
-                fail { "shouldn't get here!!" }
-            }
+        testing(sch) {
+            sch.add(object : Task.Anonymous() {
+                override fun onStart() {
+                    finish()
+                    fail { "shouldn't get here!!" }
+                }
 
-            override fun onTick(): Boolean {
-                fail { "shouldn't get here!!" }
-            }
-        })
-        runToCompletion(sch)
+                override fun onTick(): Boolean {
+                    fail { "shouldn't get here!!" }
+                }
+            })
+            runToCompletion(sch)
+        }
     }
 
     @Test
     fun `test early cancel in onStart`() {
-        sch.add(object: Task.Anonymous() {
-            override fun onStart() {
-                stop()
-                fail { "shouldn't get here!!" }
-            }
+        testing(sch) {
+            sch.add(object : Task.Anonymous() {
+                override fun onStart() {
+                    stop()
+                    fail { "shouldn't get here!!" }
+                }
 
-            override fun onTick(): Boolean {
-                fail { "shouldn't get here!!" }
-            }
-        })
-        runToCompletion(sch)
+                override fun onTick(): Boolean {
+                    fail { "shouldn't get here!!" }
+                }
+            })
+            runToCompletion(sch)
+        }
     }
 
     @Test
     fun `test early finish in onTick is not reentrant`() {
-        sch.add(object: Task.Anonymous() {
-            var n = 0
+        testing(sch) {
+            sch.add(object : Task.Anonymous() {
+                var n = 0
 
-            override fun onTick(): Boolean {
-                if (n++ == 0) finish()
-                fail { "shouldn't get here!!" }
-            }
-        })
-        runToCompletion(sch)
+                override fun onTick(): Boolean {
+                    if (n++ == 0) finish()
+                    fail { "shouldn't get here!!" }
+                }
+            })
+            runToCompletion(sch)
+        }
     }
 
     @Test
     fun `test early cancel in onTick is not reentrant`() {
-        sch.add(object: Task.Anonymous() {
-            var n = 0
+        testing(sch) {
+            sch.add(object : Task.Anonymous() {
+                var n = 0
 
-            override fun onTick(): Boolean {
-                if (n++ == 0) stop()
-                fail { "shouldn't get here!!" }
-            }
-        })
-        runToCompletion(sch)
+                override fun onTick(): Boolean {
+                    if (n++ == 0) stop()
+                    fail { "shouldn't get here!!" }
+                }
+            })
+            runToCompletion(sch)
+        }
     }
 }

@@ -85,3 +85,9 @@ class TestTasks {
         }
     }
 }
+
+class NoStart : Task<NoStart>() {
+    override fun onTick() = false
+
+    override fun canStart() = false
+}

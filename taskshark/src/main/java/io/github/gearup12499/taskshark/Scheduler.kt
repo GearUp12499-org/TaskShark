@@ -126,8 +126,10 @@ abstract class Scheduler {
      *
      * ### __Only call this method once on each task!__
      * Do not call directly except in custom [ITask] implementations; [Task] (the class) already handles this for you.
+     *
+     * @param wasRunning pass `true` if this task has its requested locks acquired.
      */
-    abstract fun runTaskFinalizers(task: ITask<*>)
+    abstract fun runTaskFinalizers(task: ITask<*>, wasRunning: Boolean)
 
     protected inline fun <T> using(t: ITask<*>, block: () -> T): T? = using(t, block) { null }
 

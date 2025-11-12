@@ -114,9 +114,9 @@ open class FastScheduler() : Scheduler() {
         }.toMutableSet()
     }
 
-    override fun runTaskFinalizers(task: ITask<*>) {
+    override fun runTaskFinalizers(task: ITask<*>, wasRunning: Boolean) {
         LogOutlet.currentLogger.debug {
-            "($this) Finalizing task: $task"
+            "($this) Finalizing task: $task${if (!wasRunning) " [not running]" else ""}"
         }
         if (disposed.contains(task)) {
             if (errorOnTaskDoubleFinalize) assert(false) {
@@ -127,9 +127,9 @@ open class FastScheduler() : Scheduler() {
         disposed.add(task)
         activeTicking.remove(task)
         activeWaiting.remove(task)
-        releaseAllLocks(task)
+        if (wasRunning) releaseAllLocks(task)
         notifyDependents(task)
-        notifyAllLocks(task)
+        if (wasRunning) notifyAllLocks(task)
         LogOutlet.currentLogger.debug {
             "($this) Finalize task completed: $task"
         }
@@ -144,7 +144,7 @@ open class FastScheduler() : Scheduler() {
             using(task, { task.onFinish(true) }, { return@lifecycleFinishTask })
             task.transition(ITask.State.Finished)
         } finally {
-            if (!disposed.contains(task)) runTaskFinalizers(task)
+            if (!disposed.contains(task)) runTaskFinalizers(task, true)
         }
     }
 

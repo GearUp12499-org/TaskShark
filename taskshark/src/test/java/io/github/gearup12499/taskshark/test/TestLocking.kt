@@ -5,14 +5,15 @@ import io.github.gearup12499.taskshark.ITask
 import io.github.gearup12499.taskshark.Lock
 import io.github.gearup12499.taskshark.Scheduler
 import io.github.gearup12499.taskshark.Task
+import io.github.gearup12499.taskshark.prefabs.OneShot
 import kotlin.test.Test
 
-abstract class TestLocking<T: Scheduler> : SchedulerImplTest<T>() {
-    class WithFastScheduler: TestLocking<FastScheduler>(), FastSchedulerImplMixin
+abstract class TestLocking<T : Scheduler> : SchedulerImplTest<T>() {
+    class WithFastScheduler : TestLocking<FastScheduler>(), FastSchedulerImplMixin
 
     val lock = Lock.StrLock("torch")
 
-    internal class MarkExecTime(val to: MutableMap<ITask<*>, Int>): Task<MarkExecTime>(), Testable {
+    internal class MarkExecTime(val to: MutableMap<ITask<*>, Int>) : Task<MarkExecTime>(), Testable {
         private var startedAt: Int = -1
 
         override fun onStart() {
@@ -72,11 +73,39 @@ abstract class TestLocking<T: Scheduler> : SchedulerImplTest<T>() {
     }
 
     @Test
-    fun `test lock blocking`() {
+    fun `test lock early cancel`() {
         val lock1 = lock.derive()
-        val lock2 = lock.derive()
         testing(sch) {
+            val task = sch.add(NoStart())
+            task.require(lock1)
+            // this shouldn't do anything.
+            task.stop()
+            assert(sch.getLockOwner(lock1) == null) { "Lock was somehow taken?" }
+        }
+    }
 
+    @Test
+    fun `test lock bad preempt`() {
+        val lock1 = lock.derive()
+        testing(sch) {
+            val task1 = sch.add(OneShot {}.require(lock1))
+            val task2 = task1.then(NoStart().require(lock1))
+            sch.tick()
+            // this shouldn't do anything.
+            task2.stop()
+            assert(sch.getLockOwner(lock1) == null) { "Lock was somehow taken?" }
+        }
+    }
+
+    @Test
+    fun `test lock early finish`() {
+        val lock1 = lock.derive()
+        testing(sch) {
+            val task = sch.add(NoStart())
+            task.require(lock1)
+            // this shouldn't do anything.
+            task.finish()
+            assert(sch.getLockOwner(lock1) == null) { "Lock was somehow taken?" }
         }
     }
 }
