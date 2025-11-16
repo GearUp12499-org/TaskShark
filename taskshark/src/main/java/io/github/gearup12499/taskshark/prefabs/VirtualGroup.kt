@@ -21,7 +21,6 @@ class VirtualGroup(configure: Configure) : ITask<VirtualGroup> {
     @VirtualGroupDslMarker
     inner class VirtualGroupDsl {
         fun <T: ITask<*>> add(task: T): T {
-            inside.add(task)
             scheduler.add(task)
             return task
         }
@@ -30,6 +29,8 @@ class VirtualGroup(configure: Configure) : ITask<VirtualGroup> {
     init {
         with(configure) {
             VirtualGroupDsl().conf()
+            if (scheduler is TaskBin)
+                inside.addAll((scheduler as TaskBin).registered)
         }
     }
 

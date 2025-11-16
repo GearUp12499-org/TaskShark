@@ -9,6 +9,7 @@ import io.github.gearup12499.taskshark.prefabs.OneShot
 import io.github.gearup12499.taskshark.prefabs.VirtualGroup
 import io.github.gearup12499.taskshark.prefabs.WaitTicks
 import kotlin.test.Test
+import kotlin.test.assertEquals
 
 abstract class TestGroupings<T: Scheduler> : SchedulerImplTest<T>() {
     class WithFastScheduler: TestGroupings<FastScheduler>(), FastSchedulerImplMixin
@@ -101,6 +102,24 @@ abstract class TestGroupings<T: Scheduler> : SchedulerImplTest<T>() {
             assert(v3.dependedTasks().any { it === v1 })
             assert(v3.dependedTasks().any { it === v2 })
 
+            runToCompletion(sch)
+            assertPassed()
+        }
+    }
+
+    @Test
+    fun `test something`() {
+        testing(sch) {
+            lateinit var v3: ITask<*>
+            sch.add(VirtualGroup {
+                v3 = add(VirtualGroup {
+                    add(VirtualGroup {
+                        add(RequireExecution()).then(RequireExecution())
+                    })
+                    add(RequireExecution())
+                }).then(RequireExecution())
+            })
+            assertEquals(3, v3.dependedTasks().size)
             runToCompletion(sch)
             assertPassed()
         }
