@@ -3,6 +3,7 @@ package io.github.gearup12499.taskshark.test
 import io.github.gearup12499.taskshark.FastScheduler
 import io.github.gearup12499.taskshark.ITask
 import io.github.gearup12499.taskshark.Scheduler
+import io.github.gearup12499.taskshark.Task
 import io.github.gearup12499.taskshark.prefabs.Group
 import io.github.gearup12499.taskshark.prefabs.OneShot
 import io.github.gearup12499.taskshark.prefabs.VirtualGroup
@@ -78,6 +79,28 @@ abstract class TestGroupings<T: Scheduler> : SchedulerImplTest<T>() {
             sch.add(RequireExecution())
                 .then(Group {})
                 .then(RequireExecution())
+            runToCompletion(sch)
+            assertPassed()
+        }
+    }
+
+    @Test
+    fun `test nested groups`() {
+        testing(sch) {
+            lateinit var v1: Task<*>
+            lateinit var v2: Task<*>
+            lateinit var v3: Task<*>
+            sch.add(VirtualGroup {
+                v3 = add(VirtualGroup {
+                    v1 = add(RequireExecution())
+                    v2 = add(RequireExecution())
+                }).then(RequireExecution())
+            })
+
+            assert(v3.dependedTasks().size == 2) { "didn't work" }
+            assert(v3.dependedTasks().any { it === v1 })
+            assert(v3.dependedTasks().any { it === v2 })
+
             runToCompletion(sch)
             assertPassed()
         }

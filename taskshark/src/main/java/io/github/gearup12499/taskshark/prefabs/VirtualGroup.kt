@@ -7,6 +7,7 @@ import io.github.gearup12499.taskshark.api.BuiltInTags
 import io.github.gearup12499.taskshark.virtual.TaskBin
 
 class VirtualGroup(configure: Configure) : ITask<VirtualGroup> {
+    private var isUnowned = true
     private var scheduler: Scheduler = TaskBin()
     val inside: MutableSet<ITask<*>> = mutableSetOf()
 
@@ -48,6 +49,8 @@ class VirtualGroup(configure: Configure) : ITask<VirtualGroup> {
      * @suppress
      */
     override fun register(parent: Scheduler) {
+        if (scheduler === parent) return
+        isUnowned = false
         val prev = scheduler
         if (prev is TaskBin) prev.retcon(parent)
         else for (task in inside) parent.add(task) // this is probably as good as we're going to get
@@ -101,7 +104,7 @@ class VirtualGroup(configure: Configure) : ITask<VirtualGroup> {
     override fun stop(cancel: Boolean) = reject()
 
     override fun <T : ITask<T>> then(other: T): T {
-        if (scheduler is TaskBin) throw IllegalStateException("No suitable scheduler assigned when calling 'then'")
+        if (isUnowned) throw IllegalStateException("No suitable scheduler assigned when calling 'then'")
         scheduler.add(other)
         for (item in inside) item.then(other)
         return other
