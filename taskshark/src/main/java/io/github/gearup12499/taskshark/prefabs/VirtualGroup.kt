@@ -104,7 +104,7 @@ class VirtualGroup(configure: Configure) : ITask<VirtualGroup> {
      */
     override fun stop(cancel: Boolean) = reject()
 
-    override fun <T : ITask<T>> then(other: T): T {
+    override fun <T : ITask<*>> then(other: T): T {
         if (isUnowned) throw IllegalStateException("No suitable scheduler assigned when calling 'then'")
         scheduler.add(other)
         for (item in inside) item.then(other)
@@ -112,7 +112,7 @@ class VirtualGroup(configure: Configure) : ITask<VirtualGroup> {
     }
 
     override fun require(before: ITask<*>): VirtualGroup {
-        for (item in inside) item.require(before)
+        for (item in inside) before.then(item)
         return this
     }
 

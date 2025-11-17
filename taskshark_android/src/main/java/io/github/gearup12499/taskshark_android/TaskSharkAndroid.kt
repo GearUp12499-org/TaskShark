@@ -7,5 +7,6 @@ object TaskSharkAndroid {
     @JvmStatic fun setup() {
         LogOutlet.currentLogger = LogcatOutlet()
         systemPackages.add("android.")
+        systemPackages.add("dalvik.")
     }
 }

@@ -14,6 +14,7 @@ abstract class Task<Self: Task<Self>> : ITask<Self> {
     @JvmField protected var id = -1
     @JvmField protected var priority = 0
     @JvmField protected var scheduler: Scheduler? = null
+    @JvmField var label: String = autoName() ?: "unknown source"
 
     final override fun getState() = state
 
@@ -92,7 +93,7 @@ abstract class Task<Self: Task<Self>> : ITask<Self> {
         }
     }
 
-    override fun <T : ITask<T>> then(other: T): T {
+    override fun <T : ITask<*>> then(other: T): T {
         if (!other.isVirtual()) dependents.add(other)
         other.require(this)
         val scheduler = scheduler
@@ -110,5 +111,15 @@ abstract class Task<Self: Task<Self>> : ITask<Self> {
         return this as Self
     }
 
-    override fun toString() = "${this::class.simpleName ?: this::class.qualifiedName ?: "<?:Task>"}#$id"
+    override fun toString() = describeVerbose()
+
+    override fun describeVerbose() = buildString {
+        append("<")
+        append(this@Task::class.simpleName ?: "[unknown class]")
+        append(" #")
+        append(getId())
+        append(" ")
+        append(label)
+        append(">")
+    }
 }
