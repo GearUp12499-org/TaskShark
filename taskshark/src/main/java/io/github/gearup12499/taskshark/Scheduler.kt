@@ -136,7 +136,11 @@ abstract class Scheduler {
     protected inline fun <T> using(t: ITask<*>, block: () -> T, onStopped: () -> T?): T? {
         evalStack.addLast(t)
         return try {
-            block()
+            val result = block()
+            when (t.getState()) {
+                ITask.State.Finished, ITask.State.Cancelled -> onStopped()
+                else -> result
+            }
         } catch (_: TaskStopException) {
             /* control flow jump target */
             onStopped()

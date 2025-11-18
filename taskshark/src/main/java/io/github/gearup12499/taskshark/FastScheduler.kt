@@ -267,8 +267,9 @@ open class FastScheduler() : Scheduler() {
     }
 
     protected open fun processTicking() {
-        for (task in activeTicking.toList()) {
-            lifecycleTickTask(task)
+        activeTicking.removeIf { it.getState() != ITask.State.Ticking }
+        for (it in activeTicking.toList()) {
+            lifecycleTickTask(it)
         }
     }
 

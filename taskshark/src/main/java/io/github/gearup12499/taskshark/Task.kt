@@ -73,6 +73,7 @@ abstract class Task<Self: Task<Self>> : ITask<Self> {
     override fun stop(cancel: Boolean) {
         val wasRunning = when (state) {
             State.Starting, State.Ticking, State.Finishing -> true
+            State.Finished, State.Cancelled -> return
             else -> false
         }
         try {
