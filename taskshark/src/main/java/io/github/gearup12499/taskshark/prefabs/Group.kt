@@ -37,8 +37,6 @@ open class Group(conf: ConfigureFn) : Task<Group>() {
     }
 
     override fun onFinish(completedNormally: Boolean) {
-        if (!completedNormally) {
-            inner.stopAll()
-        }
+        inner.stopAll()
     }
 }
