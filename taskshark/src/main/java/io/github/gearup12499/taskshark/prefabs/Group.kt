@@ -19,6 +19,8 @@ open class Group(conf: ConfigureFn) : Task<Group>() {
                 else -> it.getTags().contains(BuiltInTags.DAEMON)
             }
         }
+
+        fun stopAll() = tasks.values.forEach(ITask<*>::stop)
     }
 
     private val inner = GroupScheduler()
@@ -32,5 +34,11 @@ open class Group(conf: ConfigureFn) : Task<Group>() {
     override fun onTick(): Boolean {
         inner.tick()
         return inner.isAllCompleted()
+    }
+
+    override fun onFinish(completedNormally: Boolean) {
+        if (!completedNormally) {
+            inner.stopAll()
+        }
     }
 }
