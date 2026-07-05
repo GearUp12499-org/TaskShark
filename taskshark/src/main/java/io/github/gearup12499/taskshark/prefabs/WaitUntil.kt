@@ -5,10 +5,17 @@ import io.github.gearup12499.taskshark.Task
 /**
  * Simple task that repeatedly checks if the [condition] returns `true`.
  */
-class WaitUntil(val condition: Condition) : Task<WaitUntil>() {
-    override fun onTick(): Boolean = condition.check()
+class WaitUntil(val condition: Condition) : Task() {
+    override fun onStart() {
 
+    }
+
+    override fun onTick(): Boolean = condition.check()
     fun interface Condition {
         fun check(): Boolean
     }
+
+    override fun onFinish(completedNormally: Boolean) {
+    }
+
 }

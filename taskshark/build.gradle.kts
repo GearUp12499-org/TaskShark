@@ -17,6 +17,8 @@ repositories {
 dependencies {
     testImplementation(kotlin("test"))
     dokkaHtmlPlugin(libs.dokkaVersioning)
+    implementation(libs.kotlinxCoroutinesAndroid)
+
 }
 
 publishing {

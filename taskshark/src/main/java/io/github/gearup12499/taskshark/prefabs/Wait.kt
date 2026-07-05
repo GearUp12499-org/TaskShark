@@ -6,7 +6,7 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
 
-open class Wait(val duration: Duration) : Task<Wait>() {
+open class Wait(val duration: Duration) : Task() {
     companion object {
         @JvmStatic fun s(seconds: Number) = Wait(seconds.toDouble().seconds)
         @JvmStatic fun ms(millis: Double) = Wait(millis.milliseconds)
@@ -22,5 +22,8 @@ open class Wait(val duration: Duration) : Task<Wait>() {
 
     override fun onTick(): Boolean {
         return TimeSource.Monotonic.markNow() >= endsAt!!
+    }
+
+    override fun onFinish(completedNormally: Boolean) {
     }
 }

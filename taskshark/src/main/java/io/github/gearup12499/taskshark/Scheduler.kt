@@ -1,154 +1,159 @@
 package io.github.gearup12499.taskshark
 
-import io.github.gearup12499.taskshark.api.SupportsAdd
+import io.github.gearup12499.taskshark.api.LogOutlet
+import kotlinx.coroutines.*
+import kotlin.collections.forEach
 
 /**
- * An object that handles the various actions related to running [Tasks][ITask].
- *
- * #### **Documentation in this class is intended for *implementers* (people creating custom Schedulers).**
- *
- * If you're just looking to use the library, check out the [FastScheduler] documentation.
+Object used to handle the scheduling of various tasks
  */
-abstract class Scheduler : SupportsAdd {
-    companion object {
-        private var nextID = 0
-    }
 
-    override fun equals(other: Any?): Boolean {
-        return this === other
-    }
+open class Scheduler {
 
-    override fun hashCode(): Int {
-        return (super.hashCode() shl 8) + id
-    }
+    protected val queuedTasks = mutableListOf<Task>()
 
-    /**
-     * Whether the scheduler may throw an exception for *double acquires*.
-     *
-     * A *double acquire* is when the scheduler has already committed to starting a task,
-     * but one of the locks that the task requires has been taken by another task between the
-     * time the lock status was checked and the time the lock was to be acquired.
-     *
-     * A *double require* error will usually result in a subsequent *double free* error; see [errorOnLockDoubleFree] to
-     * control that behavior.
-     */
+    val activeTasks: MutableMap<Task, Job> = mutableMapOf()
+
+    val activeTasks2: MutableMap<Job, Task> = mutableMapOf()
+    protected val locks: MutableMap<Lock, Job> =  mutableMapOf()
+
+    protected val dispatcher = Dispatcher()
+    protected val scope = CoroutineScope(dispatcher)
+
     @JvmField var errorOnLockDoubleAcquire = true
+    @JvmField var errorOnLockDoubleFree= true
 
     /**
-     * Whether the scheduler may throw an exception for *double frees*.
-     *
-     * A *double free* is when the scheduler realizes that a lock that a task claims to depend on
-     * was either acquired by another task somehow or never acquired by the task in question.
-     * While this does not represent a complete failure in the locking system the way a double acquire does,
-     * it still represents a logical failure somewhere in the system
-     *
-     * A common cause for this error is updating dependencies after the task has already started.
+     * whatever task is using the given lock will be canceled
      */
-    @JvmField var errorOnLockDoubleFree = true
-
-    /**
-     * Whether the scheduler may throw an exception for *double finalizations*.
-     *
-     * This occurs when [runTaskFinalizers] is called multiple times on the same Task.
-     * If disabled, the operation will fail silently.
-     */
-    @JvmField var errorOnTaskDoubleFinalize = true
-    @JvmField var errorOnNeverFinalized = true
-
-    @JvmField val id = nextID++
-    @JvmField val tasks = mutableMapOf<Int, ITask<*>>()
-    @JvmField protected val evalStack = ArrayDeque<ITask<*>>()
-
-    /**
-     * Add the provided [task] to this [Scheduler] and assigns an ID. This is the second phase of registration,
-     * the first phase being [ITask.register].
-     *
-     * ## Users: do not call directly. Instead, use [add] to add a task.
-     *
-     * For implementers of [Scheduler]:
-     *
-     * **Do not** call [ITask.register] in implementations; this will cause an infinite loop!
-     *
-     * @return the task's ID number in context.
-     */
-    abstract fun register(task: ITask<*>): Int
-
-    /**
-     * Hints to schedulers that dependencies for this task have changed.
-     */
-    open fun resurvey(task: ITask<*>) {}
-
-    /**
-     * Tries to start this Task if it is startable.
-     */
-    open fun refresh(task: ITask<*>) {}
-
-    /**
-     * Adds an [ITask] to this scheduler.
-     *
-     * Internally, calls [ITask.register].
-     *
-     * @return the passed task, for chaining
-     */
-    override fun <T : ITask<*>> add(task: T): T {
-        task.register(this)
-        return task
-    }
-
-    fun addAll(vararg tasks: ITask<*>) {
-        for (t in tasks) add(t)
-    }
-
-    /**
-     * Returns the current owner of a [Lock], or null if there is no current owner (i.e. it is released.)
-     */
-    abstract fun getLockOwner(lock: Lock): ITask<*>?
-
-    /**
-     * Retrieve the list of "open evaluations" - a "mini call stack" containing the stack of
-     * tasks that are actively running user code ([ITask.onStart], [ITask.onTick], [ITask.onFinish])
-     *
-     * [getCurrentEvaluation] returns the top (last) item of this "stack".
-     */
-    open fun getOpenEvaluations(): List<ITask<*>> = evalStack.toList()
-
-    /**
-     * Retrieve the current "open evaluations" - the last task to start running user code ([ITask.onStart], [ITask.onTick], [ITask.onFinish]) in this context.
-     *
-     * [getOpenEvaluations] returns the entire stack of tasks that are actively running user code.
-     */
-    open fun getCurrentEvaluation(): ITask<*>? = evalStack.lastOrNull()
-
-    /**
-     * Clean up after the provided task has finished. The task should have already been moved to one of the finish
-     * states ([ITask.State.Finished] or [ITask.State.Cancelled]) before this method is called.
-     *
-     * This method is part of the public API because it is necessary for [ITask.stop] and other outside-of-scheduler
-     * state operations.
-     *
-     * ### __Only call this method once on each task!__
-     * Do not call directly except in custom [ITask] implementations; [Task] (the class) already handles this for you.
-     *
-     * @param wasRunning pass `true` if this task has its requested locks acquired.
-     */
-    abstract fun runTaskFinalizers(task: ITask<*>, wasRunning: Boolean)
-
-    protected inline fun <T> using(t: ITask<*>, block: () -> T): T? = using(t, block) { null }
-
-    protected inline fun <T> using(t: ITask<*>, block: () -> T, onStopped: () -> T?): T? {
-        evalStack.addLast(t)
-        return try {
-            block()
-        } catch (_: TaskStopException) {
-            /* control flow jump target */
-            onStopped()
-        } finally {
-            if (evalStack.removeLast() !== t) throw TaskSharkInternalException(
-                "Evaluation stack failed: expected to remove $t, but got something else instead"
-            )
+    fun stopUsing(lock: Lock) {
+        val correlatedJob = locks[lock]
+        if (correlatedJob != null) {
+            cancel(correlatedJob)
         }
     }
 
-    abstract fun getTickCount(): Int
-    abstract fun tick()
+    /**
+     * checks each lock associated with a task and if the lock is already held will throw DoubleAcquire error
+     */
+    private fun acquireAllLocks(task: Task){
+        task.dependedLocks().forEach{
+            if (errorOnLockDoubleAcquire) assert(locks[it] == null || locks[it] === task) {
+                "Trying to acquire lock $it, but it's already owned by a different task: ${locks[it]}"
+            }
+            locks[it] = activeTasks[task]!!
+            LogOutlet.currentLogger.debug {
+                "($this) acquired lock ${it.getFriendlyName()} for $task"
+            }
+        }
+    }
+
+    /**
+     * auto cancels whatever tasks are already holding locks that given task needs
+     */
+    private fun checkLocks(task: Task){
+       task.dependedLocks().forEach{
+            stopUsing(it)
+       }
+    }
+
+    private fun releaseAllLocks(task: Task) {
+        val job = activeTasks[task]
+        task.dependedLocks().forEach {
+            if (errorOnLockDoubleFree) assert(locks[it] === job) {
+                val currentOwner = locks[it]
+                if (currentOwner == null) "Trying to release lock ${it.getFriendlyName()}, but it's already free!"
+                else "Trying to release lock ${it.getFriendlyName()}, but it's already held by $currentOwner"
+            }
+            // release
+            locks.remove(it)
+            LogOutlet.currentLogger.debug {
+                "($this) released lock ${it.getFriendlyName()} for $task"
+            }
+        }
+    }
+
+    /**
+     * notifies whatever tasks that depend on the passed in task that it can start running after passed in task is finished
+     */
+    fun notifyDependents(task: Task){
+        task.dependedTasks().forEach {
+            val job = activeTasks[task]
+            scope.launch{
+                job?.join()
+                add(it)
+            }
+        }
+    }
+
+    /**
+     * finishes the task by releasing all it's locks and removing task from active task list
+     */
+    fun runTaskFinalizers(task: Task, wasRunning:Boolean){
+        LogOutlet.currentLogger.debug {
+            "($this) Finalizing task: $task${if (!wasRunning) " [not running]" else ""}"
+        }
+        val correlatedJob = activeTasks[task]
+        if(wasRunning) releaseAllLocks(task)
+        activeTasks.remove(task)
+        activeTasks2.remove(correlatedJob)
+        LogOutlet.currentLogger.debug {
+            "($this) Finalize task completed: $task"
+        }
+    }
+
+    fun cancel(job: Job){
+        val correlatedTask = activeTasks2[job]
+        scope.launch{
+            correlatedTask?.onFinish(false)
+        }
+        job.cancel()
+        runTaskFinalizers(correlatedTask!!, true)
+    }
+
+    fun add(task: Task): Task {
+        queuedTasks.add(task)
+        return task
+    }
+
+    /**
+     * wraps the passed in task into a coroutine that yields every loop until onTick is true
+     */
+    protected open fun register(task: Task): Job {
+        return scope.launch {
+            task.onStart()
+
+            while (!task.onTick()) {
+                yield()
+            }
+
+
+            task.onFinish(true)
+            runTaskFinalizers(task, true)
+        }
+    }
+
+    protected fun processWaiting(){
+        for (task in queuedTasks.toList()){
+                val job = register(task)
+                queuedTasks.remove(task)
+                activeTasks[task] = job
+                activeTasks2[job] = task
+                checkLocks(task)
+                acquireAllLocks(task)
+                if(!task.dependedTasks().isEmpty()){
+                    notifyDependents(task)
+            }
+        }
+    }
+
+    open var tickCount = 0
+    fun tick(){
+        LogOutlet.currentLogger.trace{
+            "($this) --- TICK #$tickCount END ----"
+        }
+        tickCount++
+        processWaiting()
+        dispatcher.runTasks()
+    }
 }

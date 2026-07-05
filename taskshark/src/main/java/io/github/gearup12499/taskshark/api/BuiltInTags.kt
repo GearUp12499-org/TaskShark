@@ -1,6 +1,4 @@
 package io.github.gearup12499.taskshark.api
-import io.github.gearup12499.taskshark.ITask
-
 object BuiltInTags {
     /**
      * Daemon tasks aren't required to complete a group.

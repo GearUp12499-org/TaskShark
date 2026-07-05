@@ -1,126 +1,51 @@
 package io.github.gearup12499.taskshark
 
-import io.github.gearup12499.taskshark.ITask.IllegalTransitionException
-import io.github.gearup12499.taskshark.ITask.State
-import io.github.gearup12499.taskshark.api.LogOutlet
+/**
+ * base task use to create other tasks
+ */
+abstract class Task(val canCancel: Boolean = true) {
 
-abstract class Task<Self : Task<Self>> : ITask<Self> {
-    /**
-     * Helper type for anonymous extenders of Task that can't name themselves.
-     */
-    abstract class Anonymous : Task<Anonymous>()
+    @JvmField protected var scheduler: Scheduler? = null
 
-    @JvmField
-    protected var state = State.NotStarted
+    abstract fun onStart()
 
-    @JvmField
-    protected var id = -1
 
-    @JvmField
-    protected var priority = 0
 
-    @JvmField
-    protected var scheduler: Scheduler? = null
+    abstract fun onTick():Boolean
 
-    final override fun getState() = state
 
-    final override fun getId() = id
 
-    override fun hashCode(): Int {
-        return (scheduler?.hashCode() ?: 0) * 31 + id
-    }
-
-    override fun equals(other: Any?) = this === other
-
-    @Throws(IllegalTransitionException::class)
-    override fun transition(newState: State) {
-        if (newState.order < state.order) throw IllegalTransitionException(this, state, newState)
-        LogOutlet.currentLogger.debug {
-            buildString {
-                append("(${this@Task}) transition: $state -> $newState")
-                scheduler?.let {
-                    append(" (t = ${it.getTickCount()})")
-                }
-            }
-        }
-        state = newState
-    }
-
-    override fun register(parent: Scheduler) {
-        id = parent.register(this)
-        scheduler = parent
-    }
-
-    final override fun getPriority(): Int = priority
-
-    override fun getTags(): Set<String> = emptySet()
-
-    override fun canStart(): Boolean = true
-    override fun onStart() {}
-    override fun onFinish(completedNormally: Boolean) {}
-
-    open fun extendGetDependents(result: MutableSet<ITask<*>>) {}
+    abstract fun onFinish(completedNormally: Boolean)
 
     @JvmField
     protected val lockDependencies: MutableSet<Lock> = mutableSetOf()
 
-    @JvmField
-    protected val taskDependencies: MutableSet<ITask<*>> = mutableSetOf()
-
-    override fun require(lock: Lock): Self {
+    fun require(lock: Lock): Task{
         lockDependencies.add(lock)
         @Suppress("UNCHECKED_CAST")
-        return this as Self
+        return this as Task
     }
 
-    final override fun dependedLocks(): Set<Lock> = lockDependencies
-    final override fun dependedTasks(): Set<ITask<*>> = taskDependencies
+    open fun dependedLocks(): Set<Lock> = lockDependencies
 
-    @JvmField
-    protected val dependents: MutableSet<ITask<*>> = mutableSetOf()
-    final override fun getDependents() = dependents.toMutableSet().also { extendGetDependents(it) }
+    @JvmField protected val taskDependencies: MutableSet<Task> = mutableSetOf()
 
-    override fun stop(cancel: Boolean) {
-        val wasRunning = when (state) {
-            State.Starting, State.Ticking, State.Finishing -> true
-            else -> false
-        }
-        try {
-            when (state) {
-                State.Starting, State.Ticking -> {
-                    transition(State.Finishing)
-                    onFinish(!cancel)
-                }
 
-                else -> {}
-            }
-            transition(if (cancel) State.Cancelled else State.Finished)
-            if (scheduler?.getCurrentEvaluation() === this)
-                throw TaskStopException()
-        } finally {
-            // this really needs to run, it's the only thing saving us from
-            // deadlocking if [onFinish] blows up
-            scheduler?.runTaskFinalizers(this, wasRunning)
-        }
-    }
-
-    override fun <T : ITask<*>> then(other: T): T {
-        if (!other.isVirtual()) dependents.add(other)
-        other.require(this)
-        val scheduler = scheduler
-            ?: throw IllegalStateException(
-                "$this doesn't have a Scheduler assigned, so trying to use 'then' with $other could result in dangling tasks (which would crash when executed)\n" +
-                        "  If you're adding these tasks to a scheduler manually, add them to a scheduler first (or use the return value from .add())")
-        scheduler.add(other)
-        scheduler.resurvey(other)
+    //TODO: make it so you can only call then after the add and not after the task
+    //TODO: ex: you have to do sch.add(task()).then(task2()) and not sch.add(task().then(task2()))
+    fun then(other: Task): Task{
+        this.require(other)
         return other
     }
 
-    override fun require(before: ITask<*>): Self {
+    fun require(before: Task): Task{
         taskDependencies.add(before)
         @Suppress("UNCHECKED_CAST")
-        return this as Self
+        return this as Task
     }
 
-    override fun toString() = "${this::class.simpleName ?: this::class.qualifiedName ?: "<?:Task>"}#$id"
+    open fun dependedTasks(): Set<Task> = taskDependencies
+
+
+
 }
