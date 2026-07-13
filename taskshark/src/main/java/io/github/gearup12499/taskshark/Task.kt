@@ -3,7 +3,7 @@ package io.github.gearup12499.taskshark
 /**
  * base task use to create other tasks
  */
-abstract class Task(val canCancel: Boolean = true) {
+abstract class Task() {
 
     @JvmField protected var scheduler: Scheduler? = null
 

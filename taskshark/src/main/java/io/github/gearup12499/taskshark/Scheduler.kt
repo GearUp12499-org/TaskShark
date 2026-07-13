@@ -116,6 +116,10 @@ open class Scheduler {
         return task
     }
 
+    fun getLockOwner(lock: Lock): Job?{
+        return locks[lock]
+    }
+
     /**
      * wraps the passed in task into a coroutine that yields every loop until onTick is true
      */

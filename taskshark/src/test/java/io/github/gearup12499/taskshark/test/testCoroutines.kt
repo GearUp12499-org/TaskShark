@@ -33,6 +33,7 @@ class testCoroutines {
 
 
         while(true){
+            println(sch.getLockOwner(TestLocks.DRIVE_MOTORS))
             sch.tick()
             Thread.sleep(10)
         }
