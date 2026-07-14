@@ -22,4 +22,8 @@ class TestTask3: Task(){
     override fun onFinish(completedNormally: Boolean) {
         println("end3")
     }
+
+    override fun toString(): String {
+        return "TestTask3"
+    }
 }

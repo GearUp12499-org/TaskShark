@@ -25,6 +25,7 @@ open class Scheduler {
 
     /**
      * whatever task is using the given lock will be canceled
+     * lock is the Lock that you want to cancel
      */
     fun stopUsing(lock: Lock) {
         val correlatedJob = locks[lock]
@@ -35,6 +36,8 @@ open class Scheduler {
 
     /**
      * checks each lock associated with a task and if the lock is already held will throw DoubleAcquire error
+     * if all locks are free, task will hold all the locks it requires
+     * task is the Task that is checked
      */
     private fun acquireAllLocks(task: Task){
         task.dependedLocks().forEach{
@@ -50,12 +53,19 @@ open class Scheduler {
 
     /**
      * auto cancels whatever tasks are already holding locks that given task needs
+     * task is Task that will override the other task currently holding lock
      */
     private fun checkLocks(task: Task){
        task.dependedLocks().forEach{
             stopUsing(it)
        }
     }
+
+    /**
+     * for each lock associated with this task, the task will let go of the lock
+     * if lock is alr free or another task is holding the lock, will throw a double free error
+     * task is Task that you want to let go of locks
+     */
 
     private fun releaseAllLocks(task: Task) {
         val job = activeTasks[task]
@@ -75,6 +85,7 @@ open class Scheduler {
 
     /**
      * notifies whatever tasks that depend on the passed in task that it can start running after passed in task is finished
+     * task is Task that is waiting for the depended on task
      */
     fun notifyDependents(task: Task){
         task.dependedTasks().forEach {
@@ -102,6 +113,10 @@ open class Scheduler {
         }
     }
 
+    /**
+     * force cancels the task given
+     * job is the wrapped coroutine associated with the task
+     */
     fun cancel(job: Job){
         val correlatedTask = activeTasks2[job]
         scope.launch{
@@ -111,10 +126,19 @@ open class Scheduler {
         runTaskFinalizers(correlatedTask!!, true)
     }
 
+    /**
+     * adds current task to queue of Tasks
+     */
+
     fun add(task: Task): Task {
         queuedTasks.add(task)
+        println(task)
         return task
     }
+
+    /**
+     * returns the task that owns the lock
+     */
 
     fun getLockOwner(lock: Lock): Job?{
         return locks[lock]
@@ -137,6 +161,11 @@ open class Scheduler {
         }
     }
 
+    /**
+     * adds tasks that can be started into the active ticking list
+     * also checks and acquires all the locks it needs
+     */
+
     protected fun processWaiting(){
         for (task in queuedTasks.toList()){
                 val job = register(task)
@@ -152,6 +181,11 @@ open class Scheduler {
     }
 
     open var tickCount = 0
+
+    /**
+     * processes the waiting tasks
+     * tells dispatcher to cycle through each coroutine again
+     */
     fun tick(){
         LogOutlet.currentLogger.trace{
             "($this) --- TICK #$tickCount END ----"

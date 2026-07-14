@@ -1,7 +1,9 @@
 package io.github.gearup12499.taskshark.test
 
 import io.github.gearup12499.taskshark.Scheduler
+import io.github.gearup12499.taskshark.prefabs.Group
 import io.github.gearup12499.taskshark.prefabs.OneShot
+import testTasks.Combo
 import testTasks.TestLocks
 import testTasks.TestTask
 import testTasks.TestTask2
@@ -16,24 +18,25 @@ class testCoroutines {
 
     @Test
     fun main() {
-        var wasB = false
         println("thread on ${Thread.currentThread().name}")
         test = TestTask()
         test2 = TestTask2()
         println("task1 $test")
         println("task2 $test2")
 
-     val testGroup = OneShot {
-         sch.add(test)
-             .then(test2)
-     }
+        val group = OneShot{
+            sch.add(test).then(TestTask3())
+        }
 
-        sch.add(TestTask3().require(TestLocks.DRIVE_MOTORS)).then(OneShot{println("hi")})
-        sch.add(TestTask().require(TestLocks.DRIVE_MOTORS))
+        sch.add(Group(
+            test,
+            test2
+        )).require(TestLocks.DRIVE_MOTORS)
+        sch.add(TestTask3()).require(TestLocks.DRIVE_MOTORS)
 
+        println(test.dependedLocks())
 
         while(true){
-            println(sch.getLockOwner(TestLocks.DRIVE_MOTORS))
             sch.tick()
             Thread.sleep(10)
         }
