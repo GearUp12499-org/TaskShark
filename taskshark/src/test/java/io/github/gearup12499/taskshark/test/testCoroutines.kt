@@ -28,11 +28,7 @@ class testCoroutines {
             sch.add(test).then(TestTask3())
         }
 
-        sch.add(Group(
-            test,
-            test2
-        )).require(TestLocks.DRIVE_MOTORS)
-        sch.add(TestTask3()).require(TestLocks.DRIVE_MOTORS)
+        sch.add(TestTask3()).then(Combo.combo1)
 
         println(test.dependedLocks())
 
